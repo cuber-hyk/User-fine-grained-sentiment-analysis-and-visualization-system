@@ -1,2 +1,7 @@
-scrapy
+scrapy~=2.11.2
 redis
+
+itemadapter~=0.9.0
+mysql~=0.0.3
+mysql-connector-python~=9.1.0
+anticaptchaofficial~=1.0.61
