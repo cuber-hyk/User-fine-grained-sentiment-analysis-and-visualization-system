@@ -15,9 +15,6 @@ class PidspiderSpider(scrapy.Spider):
             yield scrapy.Request(url=url, callback=self.parse)
 
     def parse(self, response):
-        full_response_file = 'full_response.html'
-        with open(full_response_file, 'w', encoding='utf-8') as f:
-            f.write(response.body.decode('utf-8'))
         # 使用正确的 CSS 选择器来获取列表项
         list_items = response.css(
             f'{self.css_selector}')
