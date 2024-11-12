@@ -13,11 +13,13 @@ class ReviewspiderSpider(scrapy.Spider):
     lastPid = ''
     allowed_domains = ["www.amazon.com"]
     start_urls = []
-    input_file = 'test.json'
+    input_file = 'failed_pid_list.json'
     with open(input_file, 'r', encoding='utf-8') as f:
         data = json.load(f)
-    pid_list = [item['pid'] for item in data if item.get('pid')]
+    pid_list = [item for item in data]
+    # pid_list = [item['pid'] for item in data if item.get('pid')]
     count = 0
+
     def start_requests(self):
 
         for pid in self.pid_list:
@@ -28,8 +30,9 @@ class ReviewspiderSpider(scrapy.Spider):
             for page in range(1, 11):
                 url = f'https://www.amazon.com/product-reviews/{pid}/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews/&pageNumber={page}'
                 yield scrapy.Request(url=url, meta={
-                        'dont_redirect': True,
-                        'handle_httpstatus_list': [301, 302]}, callback=self.parse)
+                    'dont_redirect': True,
+                    'handle_httpstatus_list': [301, 302]}, callback=self.parse)
+
     # https://www.amazon.com/product-reviews/B08D8XHNXQ/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews
     # 'dont_redirect': True是禁止重定向
     # Request.meta 中的 handle_httpstatus_list 键可以用来指定每个request所允许的response code。
@@ -53,25 +56,22 @@ class ReviewspiderSpider(scrapy.Spider):
             star_4 = 'None%'
             star_5 = 'None%'
 
-
             if star_5_extract is not None:
                 star_5 = re.search(r'\d+%', star_5_extract).group(0)
             if star_4_extract is not None:
-                star_5 = re.search(r'\d+%', star_4_extract).group(0)
+                star_4 = re.search(r'\d+%', star_4_extract).group(0)
             if star_3_extract is not None:
-                star_5 = re.search(r'\d+%', star_3_extract).group(0)
+                star_3 = re.search(r'\d+%', star_3_extract).group(0)
             if star_2_extract is not None:
-                star_5 = re.search(r'\d+%', star_2_extract).group(0)
+                star_2 = re.search(r'\d+%', star_2_extract).group(0)
             if star_1_extract is not None:
-                star_5 = re.search(r'\d+%', star_1_extract).group(0)
-
+                star_1 = re.search(r'\d+%', star_1_extract).group(0)
 
             product_name = response.xpath('//*[@id="productTitle"]/text()').extract_first()
             ratings = response.xpath('//*[@id="acrCustomerReviewText"]/text()').extract_first()
             # //*[@id="histogramTable"]/li[1]/span/a/div[3]/span[1]/text()
             price_whole = response.xpath(
                 '//*[@id="corePriceDisplay_desktop_feature_div"]/div[1]/span/span[2]/span[2]/text()').extract_first()
-
             # //*[@id="corePriceDisplay_desktop_feature_div"]/div[1]/span[2]/span[2]/span[2]/text()
             # //*[@id="corePriceDisplay_desktop_feature_div"]/div[1]/span[4]/span[2]/span/span[2]
             # //*[@id="corePriceDisplay_desktop_feature_div"]/div[2]/span/span[1]/span[2]/span/span[2]
@@ -96,9 +96,10 @@ class ReviewspiderSpider(scrapy.Spider):
 
             # 其他信息
             # //table[@class="a-normal a-spacing-micro"]/tbody/tr
-            other_info_title = response.xpath('//table[@class="a-normal a-spacing-micro"]/tr/td[1]/span/text()').extract()
-            other_info_content = response.xpath('//table[@class="a-normal a-spacing-micro"]//tr/td[2]/span/text()').extract()
-
+            other_info_title = response.xpath(
+                '//table[@class="a-normal a-spacing-micro"]/tr/td[1]/span/text()').extract()
+            other_info_content = response.xpath(
+                '//table[@class="a-normal a-spacing-micro"]//tr/td[2]/span/text()').extract()
 
             basic_info = BasicInfo()
             basic_info['name'] = product_name
@@ -106,7 +107,7 @@ class ReviewspiderSpider(scrapy.Spider):
             basic_info['pid'] = response.url.split('/')[-2]
             basic_info['ratings'] = ratings
             basic_info['other_info'] = dict(zip(other_info_title, other_info_content))
-            basic_info['discount_price'] = '$ '+price_whole + '.' + price_fraction
+            basic_info['discount_price'] = '$ ' + price_whole + '.' + price_fraction
             basic_info['normal_price'] = price
             basic_info['about_this_item'] = about_this_item
             # basic_info['other_info_title'] = other_info_title
@@ -131,9 +132,6 @@ class ReviewspiderSpider(scrapy.Spider):
             # //*[@id="customer_review-R1VE3959R5VJ3N"]/span
             date_list = response.xpath('//*[@id="cm_cr-review_list"]/div/div/div/span/text()').extract()
 
-
-
-
             for content, star, date, title in zip(content_list, star_list, date_list, title_list):
                 review_item = AcquireReviewItem()
                 review_item['title'] = title
@@ -142,5 +140,3 @@ class ReviewspiderSpider(scrapy.Spider):
                 review_item['post_time'] = date
                 review_item['pid'] = response.url.split('/')[-3]
                 yield review_item
-
-
