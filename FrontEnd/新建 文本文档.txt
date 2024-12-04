@@ -1,1 +1,9 @@
-fds
+上传代码：
+git push如果错误，大概率远程仓库跟本地仓库不同步，需要先进行git pull 拉取远程仓库进行同步，再push
+
+pwd查看当前目录路径
+vim 加上文件名：编辑文件，输入i回车进入编辑模式，编辑完成后，输入esc 再输入:wq退出
+cat <filename>  查看指定文件内容
+
+echo <content> > <filename> ： >覆盖  >> 追加
+ls 查看当前目录下的文件 -a所有
