@@ -1,0 +1,131 @@
+/*************** 全局基础样式 ***************/
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/*************** 自定义滚动条 ***************/
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(2, 166, 181, 0.1);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(2, 166, 181, 0.3);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(2, 166, 181, 0.5);
+}
+
+/*************** Element UI 组件主题覆盖 ***************/
+.el-card {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(2, 166, 181, 0.3) !important;
+    backdrop-filter: blur(10px);
+}
+
+.el-card::before,
+.el-card::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border: 2px solid #02a6b5;
+}
+
+.el-card::before {
+    left: -2px;
+    top: -2px;
+    border-right: none;
+    border-bottom: none;
+}
+
+.el-card::after {
+    right: -2px;
+    bottom: -2px;
+    border-left: none;
+    border-top: none;
+}
+
+.el-button {
+    /* important用于提高CSS优先级的规则 */
+    /* background: rgba(2, 166, 181, 0.2) !important; */
+    background: rgb(3, 142, 206) !important;
+    border: 1px solid rgba(2, 166, 181, 181) !important;
+    /* border: 1px solid rgba(2, 166, 181, 0.3) !important; */
+    color: #fff !important;
+    backdrop-filter: blur(5px);
+}
+
+.el-button:hover {
+    background: rgba(2, 166, 181, 0.4) !important;
+    box-shadow: 0 0 15px rgba(2, 166, 181, 0.3);
+}
+
+.el-input__inner {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(2, 166, 181, 0.3) !important;
+    color: #fff !important;
+}
+
+.el-input__inner::placeholder {
+    color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.el-tag {
+    background: rgba(2, 166, 181, 0.1) !important;
+    border: 1px solid rgba(2, 166, 181, 0.3) !important;
+    color: #fff !important;
+}
+
+/*************** 面板通用样式 ***************/
+.panel {
+    position: relative;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(2, 166, 181, 0.3) !important;
+    box-shadow: 0 0 20px rgba(2, 166, 181, 0.1);
+}
+
+.panel::before,
+.panel::after {
+    content: '';
+    position: absolute;
+    width: 15px;
+    height: 15px;
+}
+
+.panel::before {
+    top: -2px;
+    left: -2px;
+    border-top: 2px solid #02a6b5;
+    border-left: 2px solid #02a6b5;
+}
+
+.panel::after {
+    bottom: -2px;
+    right: -2px;
+    border-bottom: 2px solid #02a6b5;
+    border-right: 2px solid #02a6b5;
+}
+
+.panel-title {
+    font-size: 20px;
+    color: #fff;
+    text-shadow: 0 0 15px rgba(2, 166, 181, 0.5);
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/*************** 数字显示样式 ***************/
+.digital {
+    color: #02a6b5;
+    text-shadow: 0 0 15px rgba(2, 166, 181, 0.8);
+}
