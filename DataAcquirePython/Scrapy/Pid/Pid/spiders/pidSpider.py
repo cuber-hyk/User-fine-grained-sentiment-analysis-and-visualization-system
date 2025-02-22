@@ -1,5 +1,5 @@
 import scrapy
-from Pid.items import PidItem
+from ..items import PidItem
 
 class PidspiderSpider(scrapy.Spider):
     name = "pidSpider"

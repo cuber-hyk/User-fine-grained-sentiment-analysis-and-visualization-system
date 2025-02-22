@@ -2,10 +2,8 @@ import scrapy
 from scrapy.selector import Selector
 import json
 import re
-from AcquireReview.items import AcquireReviewItem
-from AcquireReview.items import BasicInfo
-
-from anticaptchaofficial.recaptchav2proxyless import *
+from ..items import AcquireReviewItem
+from ..items import BasicInfo
 
 
 class ReviewspiderSpider(scrapy.Spider):
@@ -13,7 +11,7 @@ class ReviewspiderSpider(scrapy.Spider):
     lastPid = ''
     allowed_domains = ["www.amazon.com"]
     start_urls = []
-    input_file = 'failed_pid_list.json'
+    input_file = 'pid_list.json'
     with open(input_file, 'r', encoding='utf-8') as f:
         data = json.load(f)
     pid_list = [item for item in data]
