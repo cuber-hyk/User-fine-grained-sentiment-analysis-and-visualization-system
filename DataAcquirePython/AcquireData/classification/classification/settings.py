@@ -23,7 +23,7 @@ USER_AGENT = {
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
-
+REDIRECT_ENABLED: False
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
 
@@ -32,8 +32,8 @@ ROBOTSTXT_OBEY = True
 # See also autothrottle settings and docs
 #DOWNLOAD_DELAY = 3
 # The download delay setting will honor only one of:
-#CONCURRENT_REQUESTS_PER_DOMAIN = 16
-#CONCURRENT_REQUESTS_PER_IP = 16
+CONCURRENT_REQUESTS_PER_DOMAIN = 16
+CONCURRENT_REQUESTS_PER_IP = 16
 
 # Disable cookies (enabled by default)
 #COOKIES_ENABLED = False
@@ -42,10 +42,11 @@ ROBOTSTXT_OBEY = True
 #TELNETCONSOLE_ENABLED = False
 
 # Override the default request headers:
-#DEFAULT_REQUEST_HEADERS = {
-#    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-#    "Accept-Language": "en",
-#}
+DEFAULT_REQUEST_HEADERS = {
+   "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+   "Accept-Language": "en",
+    "Referer": "https://www.amazon.com/"
+}
 
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
@@ -106,19 +107,7 @@ MYSQL_PASSWORD = 'gdlsd030312'
 MYSQL_PORT = 3306
 
 # 启用自定义的随机延迟中间件
-DOWNLOADER_MIDDLEWARES = {
-    'classification.middlewares.RandomDelayMiddleware': 543,
-    'classification.middlewares.NoRedirectMiddleware': 600,
-}
 
-# 设置随机延迟范围（单位：秒）
-RANDOM_DELAY_RANGE = (0, 0.5)  # 在1到5秒之间随机选择延迟
 
-# 处理 302 try
 
-HTTPERROR_ALLOWED_CODES = [302]  # 允许处理302
-DUPEFILTER_DEBUG = True          # 调试重复请求
-FOLLOW_REDIRECTS = False
-COOKIES_ENABLED = True
-COOKIES_DEBUG = True  # 调试Cookies传递
 

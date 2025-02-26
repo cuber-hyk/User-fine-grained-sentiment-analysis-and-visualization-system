@@ -6,7 +6,6 @@ from pathlib import Path
 class GetReviewsSpider(scrapy.Spider):
     name = "get_reviews"
     allowed_domains = ["www.amazon.com"]
-    start_urls = ["https://www.amazon.com"]
 
     def start_requests(self):
         pid_dir = Path(__file__).parent.parent / 'data' / 'crawled_product'
@@ -31,44 +30,34 @@ class GetReviewsSpider(scrapy.Spider):
                             'handle_httpstatus_list': [301, 302]}, callback=self.parse)
 
     def parse(self, response):
-        if response.status == 302:
-            # 获取重定向目标URL
-            redirect_url = response.headers['Location'].decode()
+        # 正常解析逻辑
+        print(response)
+        review_list = response.xpath('//*[@id="cm_cr-review_list"]')
+        print(review_list)
+        test_data = response.xpath('//*[@id="customer_review-R10KR0BH2FSIG0"]/div[2]/h5/a/span[2]/text()').get()
+        test_title = response.xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[1]/div[5]/div[3]/div/ul[1]/li[1]'
+                                    '/span/div/div/div[2]/h5/a/span[2]/text()').get()
+        print(test_data)
+        print(test_title)
+        content_list = response.xpath('//*[@id="cm_cr-review_list"]/div/div/div/div/span/span/text()').extract()
+        print(content_list)
+        title_list = response.xpath('//*[@id="cm_cr-review_list"]/div/div/div/div/a/span/text()').extract()
+        star_list = response.xpath('//*[@id="cm_cr-review_list"]/div/div/div/div[2]/a/i/span/text()').extract()
+        date_list = response.xpath('//*[@id="cm_cr-review_list"]/div/div/div/span/text()').extract()
+        user_list = response.xpath('//*[@id="cm_cr-review_list"]/div/div/div/a/div[2]/span/text()').extract()
+        style_list = response.xpath('//*[@id="cm_cr-review_list"]/div/span/div/div/div[3]/a[1]/text()').extract()
 
-            # 重新构造请求（携带原始请求的meta）
-            yield scrapy.Request(
-                url=redirect_url,
-                callback=self.parse,
-                meta=response.meta  # 传递原始数据
-            )
-        else:
-            # 正常解析逻辑
-            print(response)
-            review_list = response.xpath('//*[@id="cm_cr-review_list"]')
-            print(review_list)
-            test_data = response.xpath('//*[@id="customer_review-R10KR0BH2FSIG0"]/div[2]/h5/a/span[2]/text()').get()
-            test_title = response.xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[1]/div[5]/div[3]/div/ul[1]/li[1]'
-                                        '/span/div/div/div[2]/h5/a/span[2]/text()').get()
-            print(test_data)
-            print(test_title)
-            content_list = response.xpath('//*[@id="cm_cr-review_list"]/div/div/div/div/span/span/text()').extract()
-            print(content_list)
-            title_list = response.xpath('//*[@id="cm_cr-review_list"]/div/div/div/div/a/span/text()').extract()
-            star_list = response.xpath('//*[@id="cm_cr-review_list"]/div/div/div/div[2]/a/i/span/text()').extract()
-            date_list = response.xpath('//*[@id="cm_cr-review_list"]/div/div/div/span/text()').extract()
-            user_list = response.xpath('//*[@id="cm_cr-review_list"]/div/div/div/a/div[2]/span/text()').extract()
-            style_list = response.xpath('//*[@id="cm_cr-review_list"]/div/span/div/div/div[3]/a[1]/text()').extract()
+        for content, star, date, title in zip(content_list, star_list, date_list, title_list):
+            review_item = Review()
+            # review_item['user'] = user
+            review_item['title'] = title
+            review_item['rating'] = star
+            review_item['content'] = content
+            review_item['post_time'] = date
+            review_item['pid'] = response.url.split('/')[-2]
+            # review_item['style'] = style.split(':')[0]
+            yield review_item
 
-            for content, star, date, title in zip(content_list, star_list, date_list, title_list):
-                review_item = Review()
-                # review_item['user'] = user
-                review_item['title'] = title
-                review_item['rating'] = star
-                review_item['content'] = content
-                review_item['post_time'] = date
-                review_item['pid'] = response.url.split('/')[-2]
-                # review_item['style'] = style.split(':')[0]
-                yield review_item
 
 
 # '//*[@id="customer_review-R10KR0BH2FSIG0"]/div[2]/h5/a/span[2]'
@@ -76,3 +65,4 @@ class GetReviewsSpider(scrapy.Spider):
 # '//*[@id="cm_cr-review_list"]'
 # '/html/body/div[1]/div[2]/div/div[1]/div/div[1]/div[5]/div[3]/div/ul[1]/li[2]/span/div/div/div[2]/h5/a/span[2]'
 # '/html/body/div[1]/div[2]/div/div[1]/div/div[1]/div[5]/div[3]/div/ul[1]/li[1]/span/div/div/div[2]/h5/a/span[2]'
+#https://www.amazon.com/ABCs-Trucks-Boats-Planes-Trains/product-reviews/1531912222/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews
