@@ -16,19 +16,22 @@ class ProductInfoSpider(scrapy.Spider):
     def start_requests(self):
         is_test = 0
         pid_dir = Path(__file__).parent.parent / 'data' / 'split-task'
+        pid_path = Path(__file__).parent.parent / 'data' / 'triplets' / 'pids_triplets.csv'
         if is_test:
             url = "https://www.amazon.com/dp/B09L45VFCN/"
             yield scrapy.Request(url=url, callback=self.parse, meta={'classification': "test"})
 
         else:
             files = [f for f in pid_dir.iterdir() if f.is_file()]
-            with open(files[9], mode='r', encoding='utf-8') as file:
+            file_path = pid_path
+            with open(file_path, mode='r', encoding='utf-8') as file:
                 reader = csv.DictReader(file)
                 for row in reader:
-                    classification = row['Classification']
+                    # print(pid)
+                    # classification = row['Classification']
                     pid = row['Pid']
                     url = f'https://www.amazon.com/dp/{pid}'
-                    yield scrapy.Request(url=url, callback=self.parse, meta={'classification': classification, 'pid': pid})
+                    yield scrapy.Request(url=url, callback=self.parse, meta={'pid': pid})
 
     def parse(self, response):
         product = Product()
@@ -60,5 +63,5 @@ class ProductInfoSpider(scrapy.Spider):
         product['channel'] = 'amazon'
         product['discount_price'] = normal_price if normal_price else 'no price'
         product['normal_price'] = normal_price2 if normal_price2 else 'no price'
-        product['classification'] = response.meta['classification']
+        product['classification'] = response.xpath('//*[@id="wayfinding-breadcrumbs_feature_div"]/ul/li[5]/span/a/text()').get().strip()
         yield product
