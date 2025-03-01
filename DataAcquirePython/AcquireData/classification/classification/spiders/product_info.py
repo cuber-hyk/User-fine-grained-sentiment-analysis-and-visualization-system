@@ -3,12 +3,15 @@ from pathlib import Path
 import os
 import csv
 from ..items import Product
-from scrapy_splash import SplashRequest
 
 log_path = Path(__file__).parent.parent / 'log' / 'product_info.txt'
 failed_pid = Path(__file__).parent.parent / 'log' / 'failed_pid.csv'
 
 class ProductInfoSpider(scrapy.Spider):
+
+
+
+
     name = "product-info"
     allowed_domains = ["www.amazon.com"]
     start_urls = ["https://www.amazon.com"]

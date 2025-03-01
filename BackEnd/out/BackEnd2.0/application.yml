@@ -1,0 +1,56 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: commentAnalysis
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/analysis_reviews?useUnicode=true&characterEncoding=utf-8&serverTimeZone=Shanghai&useSSL=true
+    username: analysis_reviews
+    password: analysis_reviews
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: Guet@120319
+      timeout: 5000
+
+  jackson:
+    default-property-inclusion: non_null
+  neo4j:
+    uri: bolt://localhost:7687
+    authentication:
+      username: neo4j
+      password: Guet@120319
+
+
+logging:
+  file:
+    path: debug.log
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.backend.commentanalysis.entity
+
+
+# springdoc-openapi项目配置
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+  group-configs:
+    - group: 'default'
+      paths-to-match: '/**'
+      packages-to-scan: com.backend.commentanalysis.controller
+
+# knife4j的增强配置
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
