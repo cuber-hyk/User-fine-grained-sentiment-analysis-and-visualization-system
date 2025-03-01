@@ -20,7 +20,6 @@ class ProductPidSpider(scrapy.Spider):
     start_urls = ["https://www.amazon.com"]
     classification = ''
 
-
     def start_requests(self):
         os.makedirs(log_path, exist_ok=True)
         test_dir = Path(__file__).parent.parent / 'test'
@@ -36,8 +35,6 @@ class ProductPidSpider(scrapy.Spider):
                     urls = [f'https://www.amazon.com/{href}', url + '?_encoding=UTF8&pg=2']
                     for url in urls:
                         yield scrapy.Request(url=url, callback=self.parse, meta={'classification': classification})
-
-
 
     def parse(self, response):
         pid_div = response.xpath(f'/html/body/div[1]/div[2]/div/div/div[1]/div/div/div[2]/div[1]')

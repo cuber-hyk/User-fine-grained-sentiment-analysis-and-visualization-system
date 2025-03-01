@@ -14,7 +14,10 @@ SPIDER_MODULES = ["classification.spiders"]
 NEWSPIDER_MODULE = "classification.spiders"
 
 
-DOWNLOAD_DELAY = 2
+DOWNLOAD_DELAY = 3
+AUTOTHROTTLE_ENABLED = True
+AUTOTHROTTLE_START_DELAY = 5
+AUTOTHROTTLE_MAX_DELAY = 60
 RANDOMIZE_DOWNLOAD_DELAY = True
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 USER_AGENT = {
@@ -22,8 +25,9 @@ USER_AGENT = {
 }
 
 # Obey robots.txt rules
-ROBOTSTXT_OBEY = True
-REDIRECT_ENABLED: False
+ROBOTSTXT_OBEY = False
+REDIRECT_ENABLED: True
+COOKIES_ENABLED = True
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
 
@@ -45,7 +49,7 @@ CONCURRENT_REQUESTS_PER_IP = 16
 DEFAULT_REQUEST_HEADERS = {
    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
    "Accept-Language": "en",
-    "Referer": "https://www.amazon.com/"
+    "Referer": " https://www.ebay.com/"
 }
 
 # Enable or disable spider middlewares
@@ -100,14 +104,15 @@ TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 FEED_EXPORT_ENCODING = "utf-8"
 
 # Database - Mysql
-MYSQL_HOST = 'localhost'
+MYSQL_HOST = '43.139.160.67'
 MYSQL_DATABASE = 'analysis_reviews'
-MYSQL_USER = 'root'
-MYSQL_PASSWORD = 'gdlsd030312'
+MYSQL_USER = 'analysis_reviews'
+MYSQL_PASSWORD = 'analysis_reviews'
 MYSQL_PORT = 3306
 
 # 启用自定义的随机延迟中间件
 
-
+# 重定向
+MEDIA_ALLOW_REDIRECTS = True
 
 
