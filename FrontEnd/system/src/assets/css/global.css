@@ -55,12 +55,10 @@
     border-top: none;
 }
 
-.el-button {
-    /* important用于提高CSS优先级的规则 */
-    /* background: rgba(2, 166, 181, 0.2) !important; */
-    background: rgb(3, 142, 206) !important;
+/* .el-button {
+    
+    background: rgba(3, 142, 206, 0.776) !important;
     border: 1px solid rgba(2, 166, 181, 181) !important;
-    /* border: 1px solid rgba(2, 166, 181, 0.3) !important; */
     color: #fff !important;
     backdrop-filter: blur(5px);
 }
@@ -68,7 +66,7 @@
 .el-button:hover {
     background: rgba(2, 166, 181, 0.4) !important;
     box-shadow: 0 0 15px rgba(2, 166, 181, 0.3);
-}
+} */
 
 .el-input__inner {
     background: rgba(255, 255, 255, 0.05) !important;
