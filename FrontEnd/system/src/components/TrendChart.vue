@@ -1,6 +1,6 @@
 <template>
   <div class="trend-chart">
-    <h2 class="panel-title">评论热度趋势</h2>
+    <h2 class="panel-title">评论时间趋势</h2>
     <div ref="chartContainer" class="chart-container"></div>
   </div>
 </template>
@@ -17,33 +17,26 @@ export default {
     }
   },
   computed: {
-    ...mapState(['productDetails'])
+    ...mapState(['trendsData'])
   },
-  // 监听 productDetails 的变化
   watch: {
-    productDetails: {
-      // 当 productDetails 变化时的处理函数
+    trendsData: {
       handler(val) {
-        // 如果 val 存在并且含有 trends
-        if (val && val.trends) {
-          // 在下一个 DOM 更新循环中更新图表
+        if (val) {
           this.$nextTick(() => {
             this.updateChart()
           })
         }
       },
-      // 深度监听
       deep: true
     }
   },
-  //生命周期函数
   mounted() {
-    this.$nextTick(() => {   //this.$nextTick() 是 Vue 提供的一个方法，它会在下次 DOM 更新循环结束之后延迟执行传入的回调函数。这意味着在确保 DOM 已完成渲染后，调用 initChart 方法来初始化图表。
+    this.$nextTick(() => {
       this.initChart()
     })
     window.addEventListener('resize', this.resizeChart)
   },
-  // 组件销毁时销毁图表
   beforeDestroy() {
     if (this.chart) {
       this.chart.dispose()
@@ -52,35 +45,41 @@ export default {
     window.removeEventListener('resize', this.resizeChart)
   },
   methods: {
-    // 初始化图表的方法
     initChart() {
-          if (this.chart) {
-            this.chart.dispose()
-          }
-          this.chart = echarts.init(this.$refs.chartContainer)
-          if (this.productDetails && this.productDetails.trends) {
-            this.updateChart()
-          }
-        },
+      if (this.chart) {
+        this.chart.dispose()
+      }
+      this.chart = echarts.init(this.$refs.chartContainer)
+      if (this.trendsData) {
+        this.updateChart()
+      }
+    },
     updateChart() {
-      // 检查图表和产品详情是否存在，以及趋势数据是否存在
-      if (!this.chart || !this.productDetails || !this.productDetails.trends) return
-      const { trends } = this.productDetails
-      const dates = trends.map(item => item.date)
-      const values = trends.map(item => item.heat)
+      if (!this.chart || !this.trendsData) return
+
+      // 对数据按时间排序
+      const sortedData = [...this.trendsData].sort((a, b) => {
+        if (a.year !== b.year) return a.year - b.year;
+        return a.month - b.month;
+      });
+
+      // 生成X轴标签和数据系列
+      const dates = sortedData.map(item => `${item.year}-${item.month.toString().padStart(2, '0')}`);
+      const counts = sortedData.map(item => item.count);
 
       const option = {
-        //定义一个提示框的配置对象
         tooltip: {
           trigger: 'axis',
-          formatter: '{b}<br/>热度: {c}'
+          formatter: function(params) {
+            const data = params[0];
+            return `${data.name}<br/>评论数: ${data.value}条`;
+          }
         },
-        //设置图表的网格布局
         grid: {
           top: '10%',
           left: '3%',
           right: '4%',
-          bottom: '3%',
+          bottom: '15%',
           containLabel: true
         },
         xAxis: {
@@ -93,17 +92,22 @@ export default {
         },
         yAxis: {
           type: 'value',
-          name: '热度',
-          min: 0,
-          max: 5,
+          name: '评论数',
+          minInterval: 1,
           splitLine: {
             show: true,
           },
-          
+          axisLabel: {
+            color: '#ffffff'
+          },
+          nameTextStyle: {
+            color: '#ffffff'
+          }
         },
         series: [
           {
-            data: values,
+            name: '评论数量',
+            data: counts,
             type: 'line',
             smooth: true,
             lineStyle: {
@@ -128,9 +132,9 @@ export default {
         ]
       }
 
-      this.chart.setOption(option)  //更新图表
+      this.chart.setOption(option)
     },
-    resizeChart() {  //是 Vue 组件中的一个方法 resizeChart()，目的是在组件或窗口大小变化时调整图表的尺寸
+    resizeChart() {
       if (this.chart) {
         this.chart.resize()
       }

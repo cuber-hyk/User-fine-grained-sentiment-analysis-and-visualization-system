@@ -267,4 +267,21 @@ Mock.mock(/\/api\/products\/get_obj/, 'get', (options) => {
         status: 'success',
         data: products[product_id] || products['1'] // 如果找不到对应ID的商品，返回默认商品
     }
-}) 
+})
+
+// // 模拟用户注册接口
+
+// Mock.mock('/api/user/register', 'post', (options) => {
+//   // 解析请求参数
+//   const { username, password } = JSON.parse(options.body);
+
+//   // 模拟注册成功的数据
+//   return Mock.mock({
+//     status: 'success',
+//     'data': {
+//       'userId': '@id',
+//       'username': username, // 返回请求中传过来的用户名
+//       'message': '用户注册成功'
+//     }
+//   });
+// });

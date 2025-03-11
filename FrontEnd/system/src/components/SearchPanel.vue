@@ -23,19 +23,9 @@
         @click.native="handleSelectProduct(item)"
       >
         <div class="item-content">
-          <el-image
-            :src="item.image"
-            fit="cover"
-            class="item-image"
-          >
-            <div slot="error" class="image-slot">
-              <i class="el-icon-picture-outline"></i>
-            </div>
-          </el-image>
           <div class="item-info">
             <div class="item-name">{{ item.name }}</div>
-            <div class="item-score">评分: {{ item.score }}</div>
-            <div class="item-price">价格: {{ item.price }}</div>
+            <div class="item-id">商品ID: {{ item.id }}</div>
           </div>
         </div>
       </el-card>
@@ -84,6 +74,9 @@ export default {
 </script>
 
 <style scoped>
+.item-id {
+  color: #909399;
+}
 .search-panel {
   height: 100%;
   display: flex;
