@@ -36,7 +36,7 @@ class EbayPidSpider(scrapy.Spider):
         product_hrefs = selector.xpath('//*[@id="srp-river-results"]/ul/li/div/div[2]/a/@href').extract()
         # print(product_hrefs)
         # product_hrefs = response.xpath('//*[@id="srp-river-results"]/ul/li/div/div[2]/a/@href').extract()
-        file_path = Path(__file__).parent.parent / 'data' / 'ebay' / 'product' / 'product_href.csv'
+        file_path = Path(__file__).parent.parent / 'data' / 'ebay' / 'product' / 'product_href_20250307.csv'
         with open(file_path, 'a', encoding='utf-8', newline='') as f:
             csv_writer = csv.writer(f)
             if f.tell() == 0:

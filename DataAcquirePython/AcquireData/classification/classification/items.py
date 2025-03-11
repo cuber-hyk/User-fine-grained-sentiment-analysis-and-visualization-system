@@ -50,4 +50,5 @@ class Review(scrapy.Item):
     post_time = scrapy.Field()
     content = scrapy.Field()
     style = scrapy.Field()
+    sentiment = scrapy.Field()
 
