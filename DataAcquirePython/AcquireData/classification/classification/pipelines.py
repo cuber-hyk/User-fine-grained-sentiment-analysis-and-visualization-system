@@ -137,22 +137,16 @@ class ClassificationPipeline:
         elif isinstance(item, Review):
             try:
                 insert_sql = """
-                                INSERT INTO original_data_tb_reviews (title, rating, content, post_time, pid, rid, 
+                                INSERT INTO original_data_tb_reviews (sentiment, content, post_time, pid, 
                                 create_time, update_time)
-                                VALUES (%s, %s, %s, %s, %s, %d, NOW(), NOW())
+                                VALUES (%s, %s, %s, %s, NOW(), NOW())
                             """
 
                 values = (
-                    item['title'],
-                    item['rating'],
+                    item['sentiment'],
                     item['content'],
                     item['post_time'],
                     item['pid'],
-                    item['rid'],
-                    item['create_time'],
-                    item['update_time'],
-                    # item['user'],
-                    # item['style'],
                 )
                 self.cursor.execute(insert_sql, values)
                 self.connection.commit()
