@@ -1,11 +1,12 @@
 import csv
+import datetime
 
 import scrapy
 from scrapy import Selector
 from fake_useragent import UserAgent
 from pathlib import Path
 from selenium import webdriver
-
+from datetime import datetime
 class EbayPidSpider(scrapy.Spider):
     name = "ebay_product"
     allowed_domains = ["www.ebay.com"]
@@ -36,7 +37,11 @@ class EbayPidSpider(scrapy.Spider):
         product_hrefs = selector.xpath('//*[@id="srp-river-results"]/ul/li/div/div[2]/a/@href').extract()
         # print(product_hrefs)
         # product_hrefs = response.xpath('//*[@id="srp-river-results"]/ul/li/div/div[2]/a/@href').extract()
-        file_path = Path(__file__).parent.parent / 'data' / 'ebay' / 'product' / 'product_href_20250307.csv'
+        # 获取当前日期
+        current_date = datetime.now()
+        # 格式化为 YYYYMMDD
+        formatted_date = current_date.strftime("%Y%m%d")
+        file_path = Path(__file__).parent.parent / 'data' / 'ebay' / 'product' / f'product_href_{formatted_date}.csv'
         with open(file_path, 'a', encoding='utf-8', newline='') as f:
             csv_writer = csv.writer(f)
             if f.tell() == 0:
