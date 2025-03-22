@@ -7,6 +7,7 @@ from pathlib import Path
 from selenium import webdriver
 from ..items import Product
 from selenium.webdriver.chrome.options import Options
+from datetime import datetime
 from selenium.webdriver.common.action_chains import ActionChains
 class EbayProductInfoSpider(scrapy.Spider):
     name = "ebay_product_info"
@@ -33,7 +34,11 @@ class EbayProductInfoSpider(scrapy.Spider):
         self.driver = webdriver.Chrome(options=chrome_options)
 
     def start_requests(self):
-        file_path = Path(__file__).parent.parent / 'data' / 'ebay' / 'product' / 'product_href_20250307.csv'
+        # 获取当前日期
+        current_date = datetime.now()
+        # 格式化为 YYYYMMDD
+        formatted_date = current_date.strftime("%Y%m%d")
+        file_path = Path(__file__).parent.parent / 'data' / 'ebay' / 'product' / f'product_href_{formatted_date}.csv'
         count = 0
         with open(file_path, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
@@ -63,7 +68,11 @@ class EbayProductInfoSpider(scrapy.Spider):
                                                  'div.vim.x-breadcrumb > div.x-breadcrumb__wrapper > div > nav > ul > '
                                                  'li > a > span::text ').getall())
         product['classification'] = classification_str
-        file_path = Path(__file__).parent.parent / 'data' / 'ebay' / 'product' / 'reviews_href_20250307.csv'
+        # 获取当前日期
+        current_date = datetime.now()
+        # 格式化为 YYYYMMDD
+        formatted_date = current_date.strftime("%Y%m%d")
+        file_path = Path(__file__).parent.parent / 'data' / 'ebay' / 'product' / f'reviews_href_{formatted_date}.csv'
         href = selector.xpath('//*[@id="STORE_INFORMATION"]/div/div/div[2]/div/div/div[2]/a/@href').get()
         with open(file_path, mode='a', encoding='utf-8', newline='') as file:
             writer = csv.writer(file)

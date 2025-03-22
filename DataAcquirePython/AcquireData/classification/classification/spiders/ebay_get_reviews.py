@@ -77,7 +77,11 @@ class EbayGetReviewsSpider(scrapy.Spider):
             pid = url.split('item_id=')[1].split('&')[0]
             yield scrapy.Request(url=url, callback=self.parse, meta={'pid': pid})
         else:
-            file_path = Path(__file__).parent.parent / 'data' / 'ebay' / 'product' / 'reviews_href_20250308.csv'
+            # 获取当前日期
+            current_date = datetime.now()
+            # 格式化为 YYYYMMDD
+            formatted_date = current_date.strftime("%Y%m%d")
+            file_path = Path(__file__).parent.parent / 'data' / 'ebay' / 'product' / f'reviews_href_{formatted_date}.csv'
 
             with open(file_path, 'r', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
