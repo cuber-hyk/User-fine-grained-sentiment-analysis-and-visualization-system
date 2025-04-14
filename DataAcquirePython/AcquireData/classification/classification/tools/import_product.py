@@ -7,6 +7,7 @@ uri = "bolt://localhost:7687"  # Neo4j服务的URI
 user = "neo4j"  # 用户名
 password = "Guet@120319"  # 密码
 
+
 # 连接到Neo4j数据库
 driver = GraphDatabase.driver(uri, auth=(user, password))
 
