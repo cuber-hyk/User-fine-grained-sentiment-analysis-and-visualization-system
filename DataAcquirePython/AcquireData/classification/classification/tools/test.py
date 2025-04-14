@@ -1,3 +1,13 @@
-url = "https://www.ebay.com/itm/166188541057?_skw=all+categories&itmmeta=01JN82TQET29R4A7Y0PSMK7N4W&hash=item26b19be481:g:iawAAOSwSpVklVLR&itmprp=enc%3AAQAKAAAA8FkggFvd1GGDu0w3yXCmi1cgIa3AN5XWdYDZefOBxsBsk6HGDeOZIbmpTxDVuh9903N4x2HvdWZqn3wJeZGngHhZ6fignnVChTJX0LlL2MDzOOr4DC6hmrAR5Wpc9iRmNNiYflu2h36gx7kglFshphB%2F9etRB3QBPP4VrjTO2jnC6JOFu9U%2B1G2f4OA82AJ32dStd7K2riRw70wFUsFYfV7XrIP4f46TE0lFv9IyIjOgHNcJa7WSH%2BF3lalhCr9dsY7mqBiasFV30H3nVfu96XHBR8SP3N2tuRQ27KtMV8V77Q6ta%2FcipkO32uGJD4RSKQ%3D%3D%7Ctkp%3ABFBMyvfqgqpl"
-pid = url.split('/itm/')[1].split('?')[0]
-print(pid)
+from pathlib import Path
+import csv
+
+
+file_path = Path(__file__).parent.parent / 'data' / 'ebay' / 'product' / 'reviews_href_20250308.csv'
+with open(file_path, 'r', encoding='utf-8') as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        if row['href'] == '':
+            pid = row['pid']
+            username = row['username']
+            url = f'https://www.ebay.com/fdbk/mweb_profile?fdbkType=FeedbackReceivedAsSeller&item_id={pid}&username={username}&filter=feedback_page%3ARECEIVED_AS_SELLER&sort=RELEVANCE'
+            print(url)

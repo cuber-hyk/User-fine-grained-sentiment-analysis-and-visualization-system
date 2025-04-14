@@ -12,7 +12,7 @@ class Category1Spider(scrapy.Spider):
         yield scrapy.Request(url=url, callback=self.parse)
 
     def parse(self, response):
-        hrefs = response.xpath('//*[@id="x-refine__group__0"]/ul/li/ul/li/a/@href').extract()
+        hrefs = response.xpath('//*[@id="x-refine__group__0"]/ul/li/ul/li/a/@href').extract_all()
         file_path = Path(__file__).parent.parent / 'data' / 'ebay' / 'category_1' / 'href.csv'
         with open(file_path, mode='a', encoding='utf-8', newline='') as file:
             writer = csv.writer(file)

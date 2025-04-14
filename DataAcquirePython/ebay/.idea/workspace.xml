@@ -2,18 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="fed949e8-b0cd-4e5c-a310-db23d7abbadd" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../../BackEnd/debug.log/spring.log.2025-02-27.0.gz" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../BackEnd/out/BackEnd2.0/application.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../AcquireData/requirements.in" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../AcquireData/requirements2.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../BackEnd/CommentAnalysis" beforeDir="false" afterPath="$PROJECT_DIR$/../../BackEnd/CommentAnalysis" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../BackEnd/debug.log/spring.log" beforeDir="false" afterPath="$PROJECT_DIR$/../../BackEnd/debug.log/spring.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../BackEnd/debug.log/spring.log.2025-02-20.0.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../BackEnd/out/artifacts/BackEnd_jar/BackEnd.jar" beforeDir="false" afterPath="$PROJECT_DIR$/../../BackEnd/out/artifacts/BackEnd_jar/BackEnd.jar" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../AcquireData/.idea/AcquireData.iml" beforeDir="false" afterPath="$PROJECT_DIR$/../AcquireData/.idea/AcquireData.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../AcquireData/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../AcquireData/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../AcquireData/classification/classification/pipelines.py" beforeDir="false" afterPath="$PROJECT_DIR$/../AcquireData/classification/classification/pipelines.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../AcquireData/classification/classification/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/../AcquireData/classification/classification/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../AcquireData/classification/classification/spiders/product_info.py" beforeDir="false" afterPath="$PROJECT_DIR$/../AcquireData/classification/classification/spiders/product_info.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../AcquireData/classification/classification/spiders/product_pid.py" beforeDir="false" afterPath="$PROJECT_DIR$/../AcquireData/classification/classification/spiders/product_pid.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../BackEnd/debug.log/spring.log.2025-03-04.0.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../AcquireData/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../AcquireData/requirements.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,22 +17,22 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 8
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 8
+}</component>
   <component name="ProjectId" id="2tf2jBYWumLT0WWAEx6R0AKpEuD" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "develop",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;develop&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -56,6 +50,8 @@
       <option name="presentableId" value="Default" />
       <updated>1740728940359</updated>
       <workItem from="1740728945124" duration="143000" />
+      <workItem from="1741187591264" duration="10000" />
+      <workItem from="1742620159259" duration="5000" />
     </task>
     <servers />
   </component>
