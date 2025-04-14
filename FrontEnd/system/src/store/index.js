@@ -15,6 +15,7 @@ export default new Vuex.Store({
     trendsData: null,  // 趋势分析数据
     reviewsData: null,  // 评论数据
     sourcesData: null,  // 来源数据
+    showMockData: true,  // 是否显示模拟数据
 
     // 用户相关状态
     loginForm: {

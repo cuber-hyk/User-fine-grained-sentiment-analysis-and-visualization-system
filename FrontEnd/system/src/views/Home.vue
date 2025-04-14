@@ -24,14 +24,50 @@
     </div>
     <div class="content-grid">
       <div class="row">
-        <search-panel class="panel" />
-        <product-display class="panel" />
-        <sentiment-chart class="panel" />
+        <div class="panel-wrapper">
+          <div class="detail-button" @click="navigateTo('search-detail')">
+            <i class="el-icon-full-screen"></i>
+          </div>
+          <!-- <h3 class="panel-title">商品搜索</h3> -->
+          <search-panel class="panel" />
+        </div>
+        <div class="panel-wrapper">
+          <div class="detail-button" @click="navigateTo('product-detail')">
+            <i class="el-icon-full-screen"></i>
+          </div>
+          <!-- <h3 class="panel-title">商品详情</h3> -->
+          <product-display class="panel" />
+        </div>
+        <div class="panel-wrapper">
+          <div class="detail-button" @click="navigateTo('sentiment-detail')">
+            <i class="el-icon-full-screen"></i>
+          </div>
+          <!-- <h3 class="panel-title">情感极性分析</h3> -->
+          <sentiment-chart class="panel" />
+        </div>
       </div>
       <div class="row">
-        <trend-chart class="panel" />
-        <reviews-display class="panel" />
-        <source-chart class="panel" />
+        <div class="panel-wrapper">
+          <div class="detail-button" @click="navigateTo('trend-detail')">
+            <i class="el-icon-full-screen"></i>
+          </div>
+          <!-- <h3 class="panel-title">评论时间趋势</h3> -->
+          <trend-chart class="panel" />
+        </div>
+        <div class="panel-wrapper">
+          <div class="detail-button" @click="navigateTo('reviews-detail')">
+            <i class="el-icon-full-screen"></i>
+          </div>
+          <!-- <h3 class="panel-title">评论分析</h3> -->
+          <reviews-display class="panel" />
+        </div>
+        <div class="panel-wrapper">
+          <div class="detail-button" @click="navigateTo('source-detail')">
+            <i class="el-icon-full-screen"></i>
+          </div>
+          <!-- <h3 class="panel-title">数据来源展示</h3> -->
+          <source-chart class="panel" />
+        </div>
       </div>
     </div>
     <!-- 添加 UserProfile 组件，通过 v-if 控制显示 -->
@@ -48,6 +84,7 @@ import TrendChart from "@/components/TrendChart.vue";
 import ReviewsDisplay from "@/components/ReviewsDisplay.vue";
 import SourceChart from "@/components/SourceChart.vue";
 import UserProfile from "@/components/UserProfile.vue"; // 引入 UserProfile 组件
+import { mockProductDetails, mockTrendsData } from "@/mock/mockData.js"; // 导入模拟数据
 
 export default {
   name: "HomePage",
@@ -62,7 +99,7 @@ export default {
   },
   data() {
     return {
-      showUserProfile: false, // 控制 UserProfile 组件的显示与隐藏
+      showUserProfile: false // 控制 UserProfile 组件的显示与隐藏
     };
   },
   computed: {
@@ -82,6 +119,15 @@ export default {
         console.error("获取用户信息失败:", error);
       }
     },
+    // 导航到详情页面
+    navigateTo(route) {
+      this.$router.push(`/${route}`);
+      
+      // 触发窗口resize事件，确保图表在新页面中正确渲染
+      this.$nextTick(() => {
+        window.dispatchEvent(new Event('resize'));
+      });
+    }
   },
   async created() {
     if (this.user.userId) {
@@ -91,6 +137,16 @@ export default {
       } catch (error) {
         console.error("获取用户信息失败:", error);
       }
+    }
+    
+    // 如果没有产品详情数据，则使用模拟数据
+    if (!this.$store.state.productDetails) {
+      this.$store.commit('SET_PRODUCT_DETAILS', mockProductDetails);
+    }
+    
+    // 如果没有趋势数据，则使用模拟数据
+    if (!this.$store.state.trendsData) {
+      this.$store.commit('SET_TRENDS_DATA', mockTrendsData);
     }
   },
 };
@@ -186,6 +242,7 @@ export default {
   max-width: 1800px;
   margin: 0 auto;
   padding: 0 20px;
+  position: relative; /* 添加相对定位，作为放大面板的定位参考 */
 }
 
 .row {
@@ -193,17 +250,75 @@ export default {
   gap: 20px;
   height: calc(50vh - 80px);
   min-height: 400px;
+  position: relative; /* 添加相对定位 */
+}
+
+.panel-wrapper {
+  flex: 1;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1); /* 使用更高效的过渡函数 */
+  will-change: transform, opacity;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(2, 166, 181, 0.15);
+  transform-origin: center center;
+  backface-visibility: hidden;
+  /* 添加GPU加速，减少页面卡顿 */
+  transform: translateZ(0);
 }
 
 .panel {
-  flex: 1;
+  height: 100%;
   padding: 20px;
   transition: all 0.3s ease;
 }
 
-.panel:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 0 25px rgba(2, 166, 181, 0.2);
+.panel-wrapper:hover {
+  transform: translateY(-5px) translateZ(0);
+  box-shadow: 0 0 20px rgba(2, 166, 181, 0.2);
+}
+
+
+
+/* 详情按钮样式 */
+.detail-button {
+  position: absolute;
+  top: 10px;
+  /* right: 10px; */
+  left: 10px;
+  
+  width: 30px;
+  height: 30px;
+  background-color: rgba(2, 166, 181, 0.7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s ease;
+  opacity: 0.7;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.detail-button:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.detail-button i {
+  color: white;
+  font-size: 16px;
+}
+
+.panel-title {
+  position: absolute;
+  top: 10px;
+  left: 15px;
+  margin: 0;
+  font-size: 16px;
+  color: #ffffff;
+  z-index: 5;
 }
 
 @media (max-width: 1600px) {

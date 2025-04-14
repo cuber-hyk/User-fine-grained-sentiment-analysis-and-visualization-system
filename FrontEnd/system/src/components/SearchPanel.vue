@@ -15,9 +15,10 @@
     </div>
 
     <!-- 搜索结果列表 -->
-    <div class="search-results" v-if="searchResults && searchResults.length > 0">
+    <!-- <div class="search-results" v-if="searchResults && searchResults.length > 0"></div> -->
+    <div class="search-results" v-if="displayResults && displayResults.length > 0">
       <el-card
-        v-for="item in searchResults"
+        v-for="item in displayResults"
         :key="item.id"
         class="result-item"
         @click.native="handleSelectProduct(item)"
@@ -33,13 +34,13 @@
 
     <!-- 无搜索结果时显示提示 -->
     <el-empty 
-      v-else-if="searchResults !== null" 
+      v-else-if="searchResults !== null && searchResults.length === 0" 
       description="未找到相关商品"
     ></el-empty>
 
     <!-- 初始状态显示提示 -->
     <el-empty 
-      v-else 
+      v-else-if="!displayResults" 
       description="请输入商品名称进行搜索"
     ></el-empty>
   </div>
@@ -47,6 +48,7 @@
 
 <script>
 import { mapState } from 'vuex'
+//import { mockSearchResults } from '@/mock/mockData.js'
 
 export default {
   name: 'SearchPanel',
@@ -56,7 +58,12 @@ export default {
     }
   },
   computed: {
-    ...mapState(['searchResults'])
+    ...mapState(['searchResults', 'showMockData']),
+    displayResults() {
+      // 如果有真实搜索结果则显示真实结果，否则显示模拟数据
+      // return this.searchResults || (this.showMockData ? mockSearchResults : null)
+      return this.searchResults 
+    }
   },
   methods: {
     handleSearch() {
