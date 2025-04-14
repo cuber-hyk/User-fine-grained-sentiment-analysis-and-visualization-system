@@ -1,5 +1,5 @@
 <template>
-  <div class="product-display">
+  <div class="product-display" :class="{'fullscreen-mode': fullscreen}">
     <h2 class="panel-title">商品展示</h2>
     <div v-if="productDetails" class="product-content">
       <h3 class="product-name">{{ productDetails.name.trim() }}</h3>
@@ -63,6 +63,12 @@
 import { mapState } from "vuex";
 
 export default {
+  props: {
+    fullscreen: {
+      type: Boolean,
+      default: false
+    }
+  },
   data() {
     return {
       isFavorited: false,
@@ -71,6 +77,10 @@ export default {
   name: "ProductDisplay",
   computed: {
     ...mapState(["productDetails"]),
+    // 获取当前路由路径
+    currentRoute() {
+      return this.$route.path;
+    }
   },
   methods: {
     toggleFavorite() {
@@ -82,7 +92,36 @@ export default {
       this.$store.commit('ADD_TO_COMPARE_LIST', this.productDetails);
       this.$router.push('/Compare'); // 跳转到对比页面
     },
+    // 检查是否在主页面，如果是则重置状态
+    checkAndResetState() {
+      // 当路由为主页时，强制重置商品详情状态
+      if (this.currentRoute === '/home') {
+        // 检查是否为HomePage组件的子组件
+        if (this.$parent && this.$parent.$options && this.$parent.$options.name === 'HomePage') {
+          console.log('在主页面，重置商品详情状态');
+          // 直接重置商品详情，不需要额外条件判断
+          this.$store.commit('SET_PRODUCT_DETAILS', null);
+        }
+      }
+    }
   },
+  // 监听路由变化
+  watch: {
+    currentRoute: {
+      handler() {
+        this.checkAndResetState();
+      },
+      immediate: true
+    }
+  },
+  // 组件激活时检查状态
+  activated() {
+    this.checkAndResetState();
+  },
+  // 组件挂载后检查状态
+  mounted() {
+    this.checkAndResetState();
+  }
 };
 </script>
 
@@ -229,5 +268,55 @@ export default {
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 全屏模式样式 */
+.fullscreen-mode .panel-title {
+  font-size: 28px;
+  margin-bottom: 35px;
+}
+
+.fullscreen-mode .product-name {
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+
+.fullscreen-mode .product-image {
+  max-width: 500px;
+}
+
+.fullscreen-mode .product-image .el-image {
+  height: 350px;
+}
+
+.fullscreen-mode .info-item {
+  font-size: 18px;
+  gap: 15px;
+  margin-bottom: 5px;
+}
+
+.fullscreen-mode .info-item i {
+  font-size: 20px;
+}
+
+.fullscreen-mode .price .discount-price {
+  font-size: 24px;
+}
+
+.fullscreen-mode .price .normal-price {
+  font-size: 18px;
+}
+
+.fullscreen-mode .favorite-button i {
+  font-size: 24px;
+}
+
+.fullscreen-mode .compare-button {
+  font-size: 16px;
+  padding: 8px 15px;
+}
+
+.fullscreen-mode .star {
+  font-size: 20px;
 }
 </style>
