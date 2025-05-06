@@ -84,7 +84,7 @@ export default {
           textStyle: {
             color: '#fff'
           },
-          data: ['Positive', 'Negative', 'Neutral'] // 图例数据
+          data: ['正面', '负面', '中性'] // 图例数据
         },
         series: [
           {
@@ -109,7 +109,7 @@ export default {
             data: [
               { 
                 value: sentiment.Positive, 
-                name: 'Positive', 
+                name: '正面', 
                 itemStyle: { 
                   color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
                     { offset: 0, color: '#67e0e3' },
@@ -119,7 +119,7 @@ export default {
               },
               { 
                 value: sentiment.Negative, 
-                name: 'Negative', 
+                name: '负面', 
                 itemStyle: { 
                   color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
                     { offset: 0, color: '#ff9f7f' },
@@ -129,7 +129,7 @@ export default {
               },
               { 
                 value: sentiment.Neutral, 
-                name: 'Neutral', 
+                name: '中性', 
                 itemStyle: { 
                   color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
                     { offset: 0, color: '#9fe6b8' },

@@ -1,7 +1,7 @@
 <template>
   <div class="detail-page">
     <div class="header">
-      <h1 class="title">评论分析</h1>
+      <h1 class="title">主题挖掘</h1>
       <el-button icon="el-icon-back" @click="goBack">返回</el-button>
     </div>
     <div class="content">

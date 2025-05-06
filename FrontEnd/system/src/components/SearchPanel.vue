@@ -1,11 +1,12 @@
 <template>
   <div class="search-panel">
-    <div class="search-box">
+    <h2 class="panel-title">商品搜索</h2>
+    <div class="search-box" >
       <el-input
         v-model="searchQuery"
         placeholder="请输入商品名称"
         @keyup.enter.native="handleSearch"
-      >
+        class="flex-1">
         <el-button
           slot="append"
           icon="el-icon-search"
@@ -81,6 +82,15 @@ export default {
 </script>
 
 <style scoped>
+.panel-title {
+  font-size: 20px;
+  /* 设置该元素的底部外边距 */
+  margin-bottom: 5px;  
+  color: #ffffff;
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+
 .item-id {
   color: #909399;
 }
@@ -92,9 +102,12 @@ export default {
 }
 
 .search-box {
-  padding: 20px;
-}
+  /* padding: 20px; */
 
+}
+.flex-1{
+  color: #030303 !important;
+}
 .search-results {
   flex: 1;
   overflow-y: auto;

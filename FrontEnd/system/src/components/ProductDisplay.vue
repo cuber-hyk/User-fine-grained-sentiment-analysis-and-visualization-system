@@ -34,10 +34,7 @@
           <i class="el-icon-star-on"></i>
           <span class="star">评分: {{ productDetails.stars.trim() }}</span>
         </div>
-        <!-- <div class="info-item">
-          <i class="el-icon-chat-line-square"></i>
-          <span>评论数: {{ productDetails.ratings }}</span>
-        </div> -->
+       
         <div class="info-item price">
           <i class="el-icon-price-tag"></i>
           <span>价格: 
@@ -46,11 +43,20 @@
                   class="normal-price">{{ productDetails.normal_price }}
             </span>
           </span>
+           
         </div>
-        <!-- <div v-if="productDetails.about_this_item" class="info-item description">
+        <div v-if="fullscreen" class="info-item">
+          <i class="el-icon-chat-line-square"></i>
+          <span>评论数: {{ productDetails.ratings }}</span>
+          </div>
+          <div v-if="fullscreen && productDetails.channel" class="info-item">
+            <i class="el-icon-shopping-cart-full"></i>
+            <span>来源: {{ productDetails.channel }}</span>
+          </div>
+        <div v-if="fullscreen && productDetails.classification" class="info-item description">
           <i class="el-icon-info"></i>
-          <span>商品描述: {{ productDetails.about_this_item }}</span>
-        </div> -->
+          <span>商品描述: {{ productDetails.classification }}</span>
+        </div>
       </div>
     </div>
     <div v-else class="no-product">
@@ -70,9 +76,7 @@ export default {
     }
   },
   data() {
-    return {
-      isFavorited: false,
-    };
+    return {};
   },
   name: "ProductDisplay",
   computed: {
@@ -80,12 +84,26 @@ export default {
     // 获取当前路由路径
     currentRoute() {
       return this.$route.path;
+    },
+    // 判断当前商品是否已收藏
+    isFavorited() {
+      if (!this.productDetails) return false;
+      return this.$store.getters.isFavorited(this.productDetails.pid);
     }
   },
   methods: {
     toggleFavorite() {
-      this.isFavorited = !this.isFavorited;
-      console.log("收藏功能被点击");
+      if (!this.productDetails) return;
+      
+      if (this.isFavorited) {
+        // 如果已收藏，则取消收藏
+        this.$store.dispatch('removeFromFavorites', this.productDetails.pid);
+        this.$message.success('已取消收藏');
+      } else {
+        // 如果未收藏，则添加到收藏
+        this.$store.dispatch('addToFavorites', this.productDetails);
+        this.$message.success('已添加到收藏');
+      }
     },
     goToCompare() {
       // 将当前商品添加到 Vuex 存储的对比列表
@@ -140,7 +158,7 @@ export default {
 
 .panel-title {
   font-size: 20px;
-  margin-bottom: 25px;
+  margin-bottom: 10px;
   color: #ffffff;
   font-weight: 500;
   letter-spacing: 1px;
