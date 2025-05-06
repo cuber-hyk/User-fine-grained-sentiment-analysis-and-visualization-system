@@ -3,7 +3,7 @@
     <!-- <div class="back-home" @click="goHome">
       <i class="el-icon-arrow-left"></i> 返回主页
     </div> -->
-    <div class="system-title">智屏视界</div>
+    <div class="system-title">智评视界</div>
     <div class="login-panel panel animate__animated animate__fadeIn">
       <h2 class="panel-title">欢迎登录</h2>
       <p class="subtitle">请输入手机号和密码登录</p>
@@ -43,6 +43,10 @@
           </el-input>
         </el-form-item>
 
+        <el-form-item>
+          <el-checkbox v-model="rememberPassword" class="remember-password">记住密码</el-checkbox>
+        </el-form-item>
+
         <el-form-item class="form-item-register">
           <span class="register-link" @click="handleRegister"
             >没有账号？去注册</span
@@ -74,6 +78,7 @@ export default {
     return {
       showPassword: false,
       loading: false,
+      rememberPassword: false,
       loginForm: {
         phone: "",
         password: "",
@@ -100,7 +105,21 @@ export default {
     };
   },
   created() {
-    this.$store.commit("CLEAR_LOGIN_FORM");
+    // 检查是否有保存的登录信息
+    const savedLoginInfo = localStorage.getItem('loginInfo');
+    if (savedLoginInfo) {
+      try {
+        const loginInfo = JSON.parse(savedLoginInfo);
+        this.loginForm.phone = loginInfo.phone || '';
+        this.loginForm.password = loginInfo.password || '';
+        this.rememberPassword = true;
+      } catch (e) {
+        console.error('Error parsing saved login info:', e);
+        localStorage.removeItem('loginInfo');
+      }
+    } else {
+      this.$store.commit("CLEAR_LOGIN_FORM");
+    }
   },
   methods: {
     ...mapMutations(["SET_USER"]),
@@ -135,6 +154,18 @@ export default {
             token: userData.token,
             phone: this.loginForm.phone,
           });
+
+          // 处理记住密码功能
+          if (this.rememberPassword) {
+            // 保存登录信息到本地存储
+            localStorage.setItem('loginInfo', JSON.stringify({
+              phone: this.loginForm.phone,
+              password: this.loginForm.password
+            }));
+          } else {
+            // 如果取消了记住密码，则清除之前保存的登录信息
+            localStorage.removeItem('loginInfo');
+          }
 
           this.$message.success("登录成功");
           // 检查是否有重定向URL，如果有则跳转到该URL，否则跳转到主页
@@ -267,6 +298,12 @@ export default {
 .register-link:hover {
   color: #68f1fa;
   text-shadow: 0 0 5px rgba(2, 166, 181, 0.5);
+}
+
+.remember-password {
+  color: #606266;
+  font-size: 14px;
+  margin-bottom: 10px;
 }
 
 .login-button {

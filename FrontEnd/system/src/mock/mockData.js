@@ -7,6 +7,11 @@ export const mockSentimentData = {
         Negative: 15,
         Neutral: 20
     }
+    // sentiment: {
+    //     正面: 65,
+    //     负面: 15,
+    //     中性: 20
+    // }
 };
 
 // 模拟时间趋势数据
@@ -28,11 +33,11 @@ export const mockTrendsData = [
 // 模拟来源数据
 export const mockSourcesData = {
     sources: {
-        '京东': 4.5,
-        '淘宝': 4.2,
-        '天猫': 4.3,
-        '拼多多': 3.8,
-        '苏宁': 4.0
+        'Amazon': { value: 3.5, icon: require('@/assets/img/amazon.png') },
+        'eBay': { value: 4.5, icon: require('@/assets/img/ebay.png') },
+        'Walmart': { value: 3.5, icon: require('@/assets/img/walmart.png') },
+        'ASOS': { value: 4.3, icon: require('@/assets/img/asos.png') },
+        'ZARA': { value: 3.8, icon: require('@/assets/img/zara.png') }
     }
 };
 
@@ -61,7 +66,7 @@ export const mockProductDetails = {
     // discount_price: '¥3999',
     // normal_price: '¥4299',
     sentiment: mockSentimentData.sentiment,
-    //sources: mockSourcesData.sources,
+    sources: mockSourcesData.sources,
     reviews: mockReviewsData.reviews
 };
 
