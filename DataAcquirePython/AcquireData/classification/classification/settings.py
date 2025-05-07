@@ -22,7 +22,7 @@ DOWNLOAD_TIMEOUT = 5
 RANDOMIZE_DOWNLOAD_DELAY = True
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 USER_AGENT = {
-"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"
+'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0'
 }
 
 # Obey robots.txt rules
@@ -52,7 +52,6 @@ AUTOTHROTTLE_ENABLED = False
 DEFAULT_REQUEST_HEADERS = {
    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
    "Accept-Language": "en",
-    "Referer": " https://www.ebay.com/"
 }
 
 # Enable or disable spider middlewares
@@ -119,3 +118,4 @@ MYSQL_PORT = 3306
 MEDIA_ALLOW_REDIRECTS = True
 
 
+# //*[@id="item-review-section"]/div[5]/div[2]/div[1]/div/div/div[2]/div[2]/span/span

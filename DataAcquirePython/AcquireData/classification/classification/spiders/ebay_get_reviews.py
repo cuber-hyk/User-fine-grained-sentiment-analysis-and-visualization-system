@@ -110,6 +110,8 @@ class EbayGetReviewsSpider(scrapy.Spider):
             page_source = self.driver.page_source
             selector = Selector(text=page_source)
             contents = selector.xpath('//*[@id="mainContent"]//ul/li/div/div[2]//span/text()').getall()
+            if contents == '' or contents == [] or len(contents) <= 5:
+                break
             ratings = selector.xpath('//*//svg/@data-test-type').getall()
             post_times = selector.xpath('//*[@id="mainContent"]//li//span/span/text()').getall()
             for content, rating, post_time in zip(contents, ratings, post_times):

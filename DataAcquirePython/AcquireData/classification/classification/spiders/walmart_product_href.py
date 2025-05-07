@@ -12,10 +12,9 @@ class EbayPidSpider(scrapy.Spider):
     allowed_domains = ["www.ebay.com"]
     start_urls = ["https://www.ebay.com"]
     userAgent = UserAgent()
-    website = 'walmart'
 
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0',
+        'User-Agent': userAgent.random,
         'Accept-Language': 'en-US,en;q=0.9'
     }
 
@@ -24,10 +23,7 @@ class EbayPidSpider(scrapy.Spider):
         self.driver = webdriver.Chrome()
 
     def start_requests(self):
-        if self.website == 'ebay':
-            file_path = Path(__file__).parent.parent / 'data' / 'ebay' / 'category_1' / 'href.csv'
-        else:
-            file_path =  Path(__file__).parent.parent / 'data' / 'ebay' / 'category_1' / 'walmart_href.csv'
+        file_path = Path(__file__).parent.parent / 'data' / 'ebay' / 'category_1' / 'walmart_href.csv'
         with open(file_path, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
@@ -38,35 +34,22 @@ class EbayPidSpider(scrapy.Spider):
         self.driver.get(response.url)
         page_source = self.driver.page_source
         selector = Selector(text=page_source)
-        if self.website == 'ebay':
-            product_hrefs = selector.xpath('//*[@id="srp-river-results"]/ul/li/div/div[2]/a/@href').extract()
-        else:
-            product_hrefs = selector.xpath('//*//section/div/div/div/div/a/@href').extract()
+        product_hrefs = selector.xpath('//*[@id="srp-river-results"]/ul/li/div/div[2]/a/@href').extract()
         # print(product_hrefs)
         # product_hrefs = response.xpath('//*[@id="srp-river-results"]/ul/li/div/div[2]/a/@href').extract()
         # 获取当前日期
         current_date = datetime.now()
         # 格式化为 YYYYMMDD
         formatted_date = current_date.strftime("%Y%m%d")
-        if self.website == 'ebay':
-            file_path = Path(__file__).parent.parent / 'data' / 'ebay' / 'product' / f'product_href_{formatted_date}.csv'
-        else:
-            file_path = Path(__file__).parent.parent / 'data' / 'walmart' / 'product' / f'product_href_{formatted_date}.csv'
-
+        file_path = Path(__file__).parent.parent / 'data' / 'ebay' / 'product' / f'product_href_{formatted_date}.csv'
         with open(file_path, 'a', encoding='utf-8', newline='') as f:
             csv_writer = csv.writer(f)
             if f.tell() == 0:
                 csv_writer.writerow(['href', 'pid'])
-            if self.website == 'ebay':
-                for href in product_hrefs:
-                    pid = href.split('/itm/')[1].split('?')[0]
-                    href = href.split('?')[0]
-                    csv_writer.writerow([href, pid])
-            else:
-                for href in product_hrefs:
-                    href = href
-                    pid = href.split('?')[0].split('/')[-1]
-                    csv_writer.writerow([href, pid])
+            for href in product_hrefs:
+                pid = href.split('/itm/')[1].split('?')[0]
+                href = href.split('?')[0]
+                csv_writer.writerow([href, pid])
         pass
 
 #category_1
