@@ -1,10 +1,11 @@
 <template>
   <div class="login-container">
-    <div class="back-home" @click="goHome">
+    <!-- <div class="back-home" @click="goHome">
       <i class="el-icon-arrow-left"></i> 返回主页
-    </div>
-    <div class="login-box animate__animated animate__fadeIn">
-      <h2 class="title">欢迎登录</h2>
+    </div> -->
+    <div class="system-title">智评视界</div>
+    <div class="login-panel panel animate__animated animate__fadeIn">
+      <h2 class="panel-title">欢迎登录</h2>
       <p class="subtitle">请输入手机号和密码登录</p>
       <el-form
         :model="loginForm"
@@ -42,6 +43,10 @@
           </el-input>
         </el-form-item>
 
+        <el-form-item>
+          <el-checkbox v-model="rememberPassword" class="remember-password">记住密码</el-checkbox>
+        </el-form-item>
+
         <el-form-item class="form-item-register">
           <span class="register-link" @click="handleRegister"
             >没有账号？去注册</span
@@ -73,6 +78,7 @@ export default {
     return {
       showPassword: false,
       loading: false,
+      rememberPassword: false,
       loginForm: {
         phone: "",
         password: "",
@@ -99,7 +105,21 @@ export default {
     };
   },
   created() {
-    this.$store.commit("CLEAR_LOGIN_FORM");
+    // 检查是否有保存的登录信息
+    const savedLoginInfo = localStorage.getItem('loginInfo');
+    if (savedLoginInfo) {
+      try {
+        const loginInfo = JSON.parse(savedLoginInfo);
+        this.loginForm.phone = loginInfo.phone || '';
+        this.loginForm.password = loginInfo.password || '';
+        this.rememberPassword = true;
+      } catch (e) {
+        console.error('Error parsing saved login info:', e);
+        localStorage.removeItem('loginInfo');
+      }
+    } else {
+      this.$store.commit("CLEAR_LOGIN_FORM");
+    }
   },
   methods: {
     ...mapMutations(["SET_USER"]),
@@ -135,8 +155,22 @@ export default {
             phone: this.loginForm.phone,
           });
 
+          // 处理记住密码功能
+          if (this.rememberPassword) {
+            // 保存登录信息到本地存储
+            localStorage.setItem('loginInfo', JSON.stringify({
+              phone: this.loginForm.phone,
+              password: this.loginForm.password
+            }));
+          } else {
+            // 如果取消了记住密码，则清除之前保存的登录信息
+            localStorage.removeItem('loginInfo');
+          }
+
           this.$message.success("登录成功");
-          this.$router.push("/"); // 登录成功后跳转到主页
+          // 检查是否有重定向URL，如果有则跳转到该URL，否则跳转到主页
+          const redirectUrl = this.$route.query.redirect || "/home";
+          this.$router.push(redirectUrl);
         } else {
           this.$message.error(response.data.message || "登录失败");
         }
@@ -157,7 +191,7 @@ export default {
     },
 
     goHome() {
-      this.$router.push("/"); // 跳转到主页
+      this.$router.push("/home"); // 跳转到主页
     },
 
     togglePasswordVisibility() {
@@ -171,12 +205,13 @@ export default {
 /* 样式部分保持不变 */
 .login-container {
   display: flex;
-  justify-content: left;
+  flex-direction: column;
+  justify-content: flex-start;
   align-items: center;
   height: 100vh;
   margin: 0;
   padding: 20px;
-  background-image: url("../assets/log5.jpg");
+  /* background-image: url("../assets/log5.jpg"); */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -200,26 +235,44 @@ export default {
   color: #2980b9;
 }
 
-.login-box {
-  width: 360px;
-  padding: 40px;
-  background-color: rgba(255, 255, 255, 0.6);
-  margin-left: 150px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-  border-radius: 10px;
-  backdrop-filter: blur(10px);
+.system-title {
+  margin-top: 80px;
+  margin-bottom: 50px;
+  font-size: 48px;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 0 0 15px rgba(2, 166, 181, 0.7);
+  letter-spacing: 5px;
 }
 
-.title {
+.login-panel {
+  width: 400px;
+  padding: 40px;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(2, 166, 181, 0.3) !important;
+  box-shadow: 0 0 20px rgba(2, 166, 181, 0.1);
+  border-radius: 4px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.login-panel:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0 25px rgba(2, 166, 181, 0.2);
+}
+
+.panel-title {
   font-size: 24px;
-  color: #333;
+  color: #ffffff;
   text-align: center;
   margin-bottom: 20px;
+  text-shadow: 0 0 15px rgba(2, 166, 181, 0.5);
+  letter-spacing: 1px;
 }
 
 .subtitle {
   font-size: 14px;
-  color: #666;
+  color: rgba(255, 255, 255, 0.7);
   text-align: center;
   margin-bottom: 30px;
 }
@@ -235,28 +288,38 @@ export default {
 }
 
 .register-link {
-  color: #007bff;
+  color: rgba(2, 166, 181, 0.8);
   cursor: pointer;
   text-decoration: none;
   font-size: 14px;
+  transition: all 0.3s ease;
 }
 
 .register-link:hover {
-  color: #0056b3;
+  color: #68f1fa;
+  text-shadow: 0 0 5px rgba(2, 166, 181, 0.5);
+}
+
+.remember-password {
+  color: #606266;
+  font-size: 14px;
+  margin-bottom: 10px;
 }
 
 .login-button {
   width: 100%;
   height: 40px;
-  background: linear-gradient(135deg, #00eaffce, #0983caaf);
-  border: none;
+  background: linear-gradient(135deg, rgba(2, 166, 181, 0.7), rgba(0, 78, 146, 0.7));
+  border: 1px solid rgba(2, 166, 181, 0.3) !important;
+  color: #fff !important;
   font-size: 16px;
   transition: all 0.3s ease;
 }
 
 .login-button:hover {
-  background: linear-gradient(135deg, #0092b3e5, #003f7f);
-  box-shadow: 0 6px 12px rgba(0, 86, 179, 0.6);
+  background: linear-gradient(135deg, rgba(2, 166, 181, 0.9), rgba(0, 78, 146, 0.9));
+  box-shadow: 0 0 15px rgba(2, 166, 181, 0.3);
+  transform: translateY(-2px);
 }
 
 .input-field {
@@ -264,9 +327,9 @@ export default {
 }
 
 .input-field :deep(.el-input__inner) {
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  color: #333;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(2, 166, 181, 0.3) !important;
+  color: #fff !important;
   height: 40px;
   line-height: 40px;
   transition: all 0.3s ease;
@@ -274,55 +337,55 @@ export default {
 
 /* 修改 placeholder 的颜色 */
 .input-field :deep(.el-input__inner::placeholder) {
-  color: #99999990 !important;
+  color: rgba(255, 255, 255, 0.3) !important;
   font-size: 14px;
 }
 
 /* 兼容 Firefox */
 .input-field :deep(.el-input__inner::-moz-placeholder) {
-  color: #99999990 !important;
+  color: rgba(255, 255, 255, 0.3) !important;
   font-size: 14px;
 }
 
 /* 兼容 Edge */
 .input-field :deep(.el-input__inner::-ms-input-placeholder) {
-  color: #99999990 !important;
+  color: rgba(255, 255, 255, 0.3) !important;
   font-size: 14px;
 }
 
 /* 兼容 Chrome, Safari */
 .input-field :deep(.el-input__inner::-webkit-input-placeholder) {
-  color: #99999990 !important;
+  color: rgba(255, 255, 255, 0.3) !important;
   font-size: 14px;
 }
 
 .input-field :deep(.el-input__inner):focus {
-  border-color: #409eff;
-  box-shadow: 0 0 5px rgba(64, 158, 255, 0.3);
+  border-color: rgba(2, 166, 181, 0.8) !important;
+  box-shadow: 0 0 10px rgba(2, 166, 181, 0.5);
 }
 
 .input-field :deep(.el-input__prefix),
 .input-field :deep(.el-input__suffix) {
-  color: #666;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 :deep(.el-form-item__error) {
-  color: #f56c6c;
+  color: #ff9f7f;
   font-size: 12px;
   line-height: 1;
   padding-top: 4px;
+  text-shadow: 0 0 5px rgba(255, 159, 127, 0.3);
 }
 
 /* 添加密码图标的样式 */
 .el-icon-view {
   font-size: 16px;
-  color: #909399;
+  color: rgba(255, 255, 255, 0.7);
+  transition: all 0.3s ease;
 }
 
 .el-icon-view:hover {
-  color: #409eff;
-}
-.el-input :deep(.el-input__inner) {
-  color: rgba(0, 0, 0, 0.616) !important;
+  color: #68f1fa;
+  text-shadow: 0 0 5px rgba(2, 166, 181, 0.5);
 }
 </style>

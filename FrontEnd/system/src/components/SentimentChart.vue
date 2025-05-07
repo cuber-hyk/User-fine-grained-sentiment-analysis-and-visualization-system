@@ -79,7 +79,8 @@ export default {
         },
         legend: {
           orient: 'vertical',
-          left: 'left',
+          //left: 'left',
+          left: 'right',
           textStyle: {
             color: '#fff'
           },
@@ -107,7 +108,7 @@ export default {
             },
             data: [
               { 
-                value: sentiment.正面, 
+                value: sentiment.Positive, 
                 name: '正面', 
                 itemStyle: { 
                   color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
@@ -117,7 +118,7 @@ export default {
                 } 
               },
               { 
-                value: sentiment.负面, 
+                value: sentiment.Negative, 
                 name: '负面', 
                 itemStyle: { 
                   color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
@@ -127,7 +128,7 @@ export default {
                 } 
               },
               { 
-                value: sentiment.中性, 
+                value: sentiment.Neutral, 
                 name: '中性', 
                 itemStyle: { 
                   color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
@@ -169,7 +170,7 @@ export default {
 }
 
 .chart-container {
-  flex: 1;
+  flex: 2;
   width: 100%;
   min-height: 300px;  
 }

@@ -71,7 +71,7 @@
 .el-input__inner {
     background: rgba(255, 255, 255, 0.05) !important;
     border: 1px solid rgba(2, 166, 181, 0.3) !important;
-    color: #fff !important;
+    /* color: #fff !important; */
 }
 
 .el-input__inner::placeholder {
