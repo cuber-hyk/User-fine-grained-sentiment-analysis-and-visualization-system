@@ -1,6 +1,7 @@
 <template>
   <div class="trend-chart">
-    <h2 class="panel-title">评论时间趋势</h2>
+    <!-- <h2 class="panel-title">评论时间趋势</h2> -->
+    <h2 class="panel-title">评论热度趋势</h2>
     <div ref="chartContainer" class="chart-container"></div>
   </div>
 </template>
@@ -72,7 +73,7 @@ export default {
           trigger: 'axis',
           formatter: function(params) {
             const data = params[0];
-            return `${data.name}<br/>评论数: ${data.value}条`;
+            return `${data.name}<br/>评论数: ${data.value}万条`;
           }
         },
         grid: {
@@ -92,7 +93,7 @@ export default {
         },
         yAxis: {
           type: 'value',
-          name: '评论数',
+          name: '评论数/万',
           minInterval: 1,
           splitLine: {
             show: true,

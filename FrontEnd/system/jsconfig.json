@@ -1,4 +1,11 @@
 {
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "include": [
+    "src/**/*"
+  ],
   "compilerOptions": {
     "target": "es5",
     "module": "esnext",

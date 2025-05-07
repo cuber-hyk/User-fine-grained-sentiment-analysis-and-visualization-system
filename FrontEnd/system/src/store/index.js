@@ -3,10 +3,15 @@ import Vuex from 'vuex';
 import axios from 'axios';
 import router from '../router';
 import { persistencePlugin } from './plugins';
+import { mockReviewsData, mockSourcesData } from '@/mock/mockData.js';
+import favoritesModule from './favorites';
 
 Vue.use(Vuex);
 
 export default new Vuex.Store({
+  modules: {
+    favorites: favoritesModule
+  },
   state: {
     currentProduct: null,  // 当前选中的商品  
     searchResults: null,  // 搜索结果
@@ -15,11 +20,13 @@ export default new Vuex.Store({
     trendsData: null,  // 趋势分析数据
     reviewsData: null,  // 评论数据
     sourcesData: null,  // 来源数据
+    showMockData: true,  // 是否显示模拟数据
 
     // 用户相关状态
     loginForm: {
       phone: '',
       password: '',
+      rememberPassword: false,
     },
     registerForm: {
       username: '',
@@ -97,6 +104,10 @@ export default new Vuex.Store({
         password: ""
       };
       localStorage.removeItem('user');
+      // 如果用户选择了不记住密码，则清除保存的登录信息
+      if (!state.loginForm.rememberPassword) {
+        localStorage.removeItem('loginInfo');
+      }
       // 同时清除 sessionStorage 中的 token
       window.sessionStorage.removeItem('token');
       state.compareList = [];
@@ -105,6 +116,7 @@ export default new Vuex.Store({
       state.loginForm = {
         phone: '',
         password: '',
+        rememberPassword: state.loginForm.rememberPassword
       };
     },
     SET_SEARCH_RESULTS(state, results) {
@@ -360,55 +372,57 @@ export default new Vuex.Store({
           // 更新商品详情
           commit('SET_PRODUCT_DETAILS', {
             ...productInfo,
-            pid: pid
+            pid: pid,
+            reviews: mockReviewsData.reviews,
+            sources: mockSourcesData.sources
           });
 
           // 继续获取其他数据...
           // 2. 获取情感分析数据
-          // try {
-          //   // 获取正面情感Top方面词
-          //   const positiveResponse = await axios({
-          //     url: '/api/product/getTopNAspect',
-          //     method: 'get',
-          //     params: {
-          //       pid: pid.toString(),
-          //       limit: 10,
-          //       kind: '1'  // 使用'1'表示正面情感
-          //     },
-          //     headers: {
-          //       'Content-Type': 'application/json'
-          //     }
-          //   });
+          try {
+            // 获取正面情感Top方面词
+            const positiveResponse = await axios({
+              url: '/api/product/getTopNAspect',
+              method: 'get',
+              params: {
+                pid: pid.toString(),
+                limit: 10,
+                kind: '1'  // 使用'1'表示正面情感
+              },
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
 
-          //   // 获取负面情感Top方面词
-          //   const negativeResponse = await axios({
-          //     url: '/api/product/getTopNAspect',
-          //     method: 'get',
-          //     params: {
-          //       pid: pid.toString(),
-          //       limit: 10,
-          //       kind: '-1'  // 使用'-1'表示负面情感
-          //     },
-          //     headers: {
-          //       'Content-Type': 'application/json'
-          //     }
-          //   });
+            // 获取负面情感Top方面词
+            const negativeResponse = await axios({
+              url: '/api/product/getTopNAspect',
+              method: 'get',
+              params: {
+                pid: pid.toString(),
+                limit: 10,
+                kind: '-1'  // 使用'-1'表示负面情感
+              },
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
 
-          //   console.log('情感分析响应 - 正面:', positiveResponse.data);
-          //   console.log('情感分析响应 - 负面:', negativeResponse.data);
+            console.log('情感分析响应 - 正面:', positiveResponse.data);
+            console.log('情感分析响应 - 负面:', negativeResponse.data);
 
-          //   if (positiveResponse.data.code === 0 && negativeResponse.data.code === 0) {
-          //     commit('SET_SENTIMENT_DATA', {
-          //       positive: positiveResponse.data.data,
-          //       negative: negativeResponse.data.data
-          //     });
-          //   } else {
-          //     console.error('获取情感分析数据失败:',
-          //       positiveResponse.data.message || negativeResponse.data.message);
-          //   }
-          // } catch (sentimentError) {
-          //   console.error('获取情感分析数据失败:', sentimentError);
-          // }
+            if (positiveResponse.data.code === 0 && negativeResponse.data.code === 0) {
+              commit('SET_SENTIMENT_DATA', {
+                positive: positiveResponse.data.data,
+                negative: negativeResponse.data.data
+              });
+            } else {
+              console.error('获取情感分析数据失败:',
+                positiveResponse.data.message || negativeResponse.data.message);
+            }
+          } catch (sentimentError) {
+            console.error('获取情感分析数据失败:', sentimentError);
+          }
 
           // 3. 获取评论趋势数据
           try {
@@ -416,8 +430,8 @@ export default new Vuex.Store({
               url: '/api/product/getTrend',
               method: 'get',
               params: {
-                //pid: pid.toString()
-                pid: 256809724068
+                pid: pid.toString()
+                //pid: 256809724068
               },
               headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'

@@ -1,6 +1,6 @@
 <template>
   <div class="source-chart">
-    <h2 class="panel-title">数据来源展示</h2>
+    <h2 class="panel-title">数据源展示</h2>
     <div ref="chartContainer" class="chart-container"></div>
   </div>
 </template>
@@ -74,18 +74,24 @@ export default {
       if (!this.chart || !this.productDetails || !this.productDetails.sources)   return
  
       const { sources } = this.productDetails
-      const data = Object.entries(sources).map(([name, value]) => ({
+      // 添加调试信息
+      console.log('productDetails.sources:', sources)
+      
+      const data = Object.entries(sources).map(([name, item]) => ({
         name,
-        value
+        value: typeof item === 'object' ? item.value : item,
+        icon: typeof item === 'object' ? item.icon : null
       }))
- 
+      
+      console.log('处理后的数据源数据:', data)
+      
       const option = {
         tooltip: {
           trigger: 'axis',
           axisPointer: {
             type: 'shadow'
           },
-          formatter: '{b}: {c}分'
+          formatter: '{b}: {c}w'
         },
         grid: {
           top: '3%',
@@ -96,15 +102,26 @@ export default {
         },
         xAxis: {
           type: 'value',
-          name: '评分',
+          name: '商品数量',
+          nameLocation: 'middle', // 设置名称位置为中间
+          nameGap: 10, // 增加轴名称与轴线的距离
+          namecolor: '#ffffff', // 设置轴名称的颜色
+          axisLabel: {
+            // 设置 y 轴的字体大小
+            fontSize: 14,
+            // 设置 y 轴的字体颜色
+            color: '#ffffff'
+          },
           min: 0,
-          max: 5,
+          // max: function(value) {
+          //   return Math.ceil(value.max * 1.2); // 动态设置最大值
+          // },
+          max:5,
           splitNumber: 5
         },
         yAxis: {
           type: 'category',
           data: data.map(item => item.name),
-           
           axisLabel: {
             // 设置 y 轴的字体大小
             fontSize: 14,
@@ -116,7 +133,7 @@ export default {
           {
             // 图表类型设置为条形图
             type: 'bar',
-            data: data.map(item => ({
+            data: data.map((item) => ({
               value: item.value,
               itemStyle: {
                 // 设置柱状图的颜色渐变
@@ -131,8 +148,20 @@ export default {
             label: {
               show: true,
               position: 'right',
-              formatter: '{c}分'
+              formatter: '{c}w'
             }
+          },
+          // 添加图标系列
+          {
+            type: 'pictorialBar',
+            symbolPosition: 'end',
+            symbolSize: [40, 40],
+            symbolOffset: [0, 0],
+            z: 12,
+            data: data.map((item) => ({
+              value: item.value,
+              symbol: item.icon ? 'image://' + item.icon : 'none'
+            }))
           }
         ]
       }

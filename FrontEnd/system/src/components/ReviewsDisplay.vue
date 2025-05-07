@@ -1,6 +1,6 @@
 <template>
   <div class="reviews-display">
-    <h2 class="panel-title">评论分析</h2>
+    <h2 class="panel-title">主题挖掘</h2>
     <div v-if="productDetails" class="reviews-content">
       <el-card
         v-for="(opinions, aspect) in productDetails.reviews"
