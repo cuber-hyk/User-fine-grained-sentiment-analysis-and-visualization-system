@@ -5,7 +5,7 @@
       <el-button icon="el-icon-back" @click="goBack">返回</el-button>
     </div>
     <div class="content">
-      <sentiment-chart class="full-panel" />
+      <sentiment-chart class="full-panel" :isMagnified="true" />
     </div>
   </div>
 </template>

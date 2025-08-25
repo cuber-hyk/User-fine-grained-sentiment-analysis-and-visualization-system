@@ -2,78 +2,41 @@
   <div class="user-info-container" :class="`theme-${currentTheme}`">
     <div class="overlay" @click="closeProfile"></div>
     <div class="user-sidebar">
-      <!-- 侧边栏头部 -->
+      <!-- 侧边栏头部：只保留标题和关闭按钮 -->
       <div class="sidebar-header">
         <i class="el-icon-close close-icon" @click="closeProfile"></i>
         <h3 class="sidebar-title">个人中心</h3>
       </div>
 
-      <!-- 用户头像和用户名 -->
-      <div class="user-header">
-        <div class="avatar-wrapper">
-          <el-upload
-            class="avatar-uploader"
-            :action="uploadUrl"
-            :show-file-list="false"
-            :on-success="handleAvatarSuccess"
-            :before-upload="beforeAvatarUpload"
-            :disabled="!isEditing"
-            :headers="uploadHeaders"
-          >
-            <el-avatar :size="80" :src="user.icon" class="user-avatar">
-              {{ user.username?.charAt(0).toUpperCase() || "U" }}
-            </el-avatar>
-            <div
-              v-if="isEditing"
-              class="avatar-edit-hint"
-              @click.stop="triggerAvatarUpload"
-            >
-              修改头像
-            </div>
-          </el-upload>
-        </div>
-        <div class="username-display">
-          {{ user.username }}
-        </div>
+      <!-- 用户头像和用户名区域 (在侧边栏显示) -->
+      <div class="sidebar-user-info">
+         <el-avatar :size="60" :src="getAvatarUrl(user.icon)" class="sidebar-avatar">
+           {{ user.username?.charAt(0).toUpperCase() || "U" }}
+         </el-avatar>
+         <span class="sidebar-username">{{ user.username }}</span>
       </div>
 
       <!-- 侧边栏导航菜单 -->
       <div class="sidebar-menu">
-        <div 
-          class="menu-item" 
-          :class="{ active: activeMenu === 'basic' }" 
+        <div
+          class="menu-item"
+          :class="{ active: activeMenu === 'basic' }"
           @click="activeMenu = 'basic'"
         >
           <i class="el-icon-user"></i>
           <span>基本信息</span>
         </div>
-        <div 
-          class="menu-item" 
-          :class="{ active: activeMenu === 'favorites' }" 
+        <div
+          class="menu-item"
+          :class="{ active: activeMenu === 'favorites' }"
           @click="activeMenu = 'favorites'"
         >
           <i class="el-icon-star-on"></i>
           <span>我的收藏</span>
         </div>
-        <div 
-          class="menu-item" 
-          :class="{ active: activeMenu === 'password' }" 
-          @click="activeMenu = 'password'"
-        >
-          <i class="el-icon-lock"></i>
-          <span>修改密码</span>
-        </div>
-        <div 
-          class="menu-item" 
-          :class="{ active: activeMenu === 'phone' }" 
-          @click="activeMenu = 'phone'"
-        >
-          <i class="el-icon-mobile-phone"></i>
-          <span>修改手机号</span>
-        </div>
-        <div 
-          class="menu-item" 
-          :class="{ active: activeMenu === 'theme' }" 
+         <div
+          class="menu-item"
+          :class="{ active: activeMenu === 'theme' }"
           @click="activeMenu = 'theme'"
         >
           <i class="el-icon-brush"></i>
@@ -92,92 +55,151 @@
     <!-- 右侧内容区域 -->
     <div class="content-area">
       <!-- 基本信息内容 -->
-      <div v-show="activeMenu === 'basic'" class="content-panel">
+      <div v-show="activeMenu === 'basic'" class="content-panel basic-info-panel">
         <h3 class="panel-title">基本信息</h3>
-        <el-descriptions :column="1" border>
-          <el-descriptions-item label="用户名">
-            <div class="username-edit-wrapper">
-              <span v-if="!isEditingUsername">{{ user.username }}</span>
-              <el-input
-                v-else
-                ref="usernameInput"
-                v-model="editForm.username"
-                class="edit-input"
-                @blur="saveUsername"
-              />
-              <i
-                v-show="isEditing && !isEditingUsername"
-                class="el-icon-edit edit-icon"
-                @click="startEditUsername"
-              ></i>
-            </div>
-          </el-descriptions-item>
-          <el-descriptions-item label="手机号">
-            <div class="phone-edit-wrapper">
-              <span class="phone-number">{{ maskedPhone }}</span>
-              <i
-                v-show="isEditing"
-                class="el-icon-edit edit-icon"
-                @click="showPhoneDialog"
-              ></i>
-            </div>
-          </el-descriptions-item>
-        </el-descriptions>
-        
-        <!-- 操作按钮 -->
+
+        <!-- 用户信息概览区域 -->
+        <div class="user-overview">
+          <div class="avatar-display-wrapper">
+             <el-upload
+               action="#"
+               :show-file-list="false"
+               :before-upload="beforeAvatarUpload"
+             >
+               <el-avatar :size="80" :src="getAvatarUrl(user.icon)" class="user-avatar">
+                 {{ user.username?.charAt(0).toUpperCase() || "U" }}
+               </el-avatar>
+               <div
+                 v-if="isEditing"
+                 class="avatar-edit-hint"
+               >
+                 修改头像
+               </div>
+             </el-upload>
+          </div>
+          <div class="user-details-display">
+             <el-descriptions :column="1" border>
+               <el-descriptions-item label="用户名">
+                 <!-- Display mode -->
+                 <template v-if="!isEditingUsername">
+                    <span>{{ user.username }}</span>
+                     <i
+                         v-if="isEditing && !isEditingPassword && !isEditingPhone"
+                         class="el-icon-edit edit-icon"
+                         @click="startEditUsername"
+                     ></i>
+                 </template>
+                 <!-- Editing mode -->
+                 <template v-else>
+                     <el-input
+                       ref="usernameInput"
+                       v-model="editForm.username"
+                       placeholder="请输入新用户名"
+                       size="small"
+                       clearable
+                       @keyup.enter.native="saveUsername"
+                     />
+                     <el-button
+                         type="primary"
+                         size="small"
+                         @click="saveUsername"
+                         :disabled="editForm.username.trim() === user.username.trim()"
+                     >
+                         确认修改
+                     </el-button>
+                      <el-button
+                         type="info"
+                         size="small"
+                         @click="cancelEditUsername"
+                     >
+                         取消
+                     </el-button>
+                 </template>
+               </el-descriptions-item>
+               <el-descriptions-item label="手机号">
+                 <span>{{ maskedPhone }}</span>
+                  <i
+                      v-if="isEditing && !isEditingPassword && !isEditingUsername && !isEditingPhone"
+                      class="el-icon-edit edit-icon"
+                      @click="startEditPhone"
+                  ></i>
+               </el-descriptions-item>
+             </el-descriptions>
+          </div>
+        </div>
+
+        <!-- 修改手机号表单 (仅在 isEditingPhone 模式下显示) -->
+        <div v-if="isEditingPhone" class="sub-panel-section modify-phone-section">
+             <h4 class="sub-panel-title">修改手机号</h4>
+             <el-form :model="phoneForm" label-width="100px">
+               <el-form-item label="原手机号" required>
+                 <el-input
+                   v-model="phoneForm.oldPhone"
+                   placeholder="请输入原手机号"
+                   clearable
+                 />
+               </el-form-item>
+               <el-form-item label="新手机号" required>
+                 <el-input
+                   v-model="phoneForm.newPhone"
+                   placeholder="请输入新手机号"
+                   clearable
+                 />
+               </el-form-item>
+               <el-form-item>
+                 <el-button type="primary" @click="handlePhoneUpdate">确认修改</el-button>
+                  <el-button @click="cancelEditPhone">取消</el-button>
+               </el-form-item>
+             </el-form>
+        </div>
+
+        <!-- 修改密码表单 (仅在修改密码模式下显示) -->
+        <div v-if="isEditingPassword" class="sub-panel-section modify-password-section">
+             <h4 class="sub-panel-title">修改密码</h4>
+             <el-form :model="passwordForm" label-width="80px">
+               <el-form-item label="原密码" required>
+                 <el-input v-model="passwordForm.oldPassword" type="password" show-password />
+               </el-form-item>
+               <el-form-item label="新密码" required>
+                 <el-input v-model="passwordForm.newPassword" type="password" show-password />
+               </el-form-item>
+               <el-form-item>
+                 <el-button type="primary" @click="handlePasswordUpdate">确认修改</el-button>
+                 <el-button @click="cancelPasswordEdit">取消</el-button>
+               </el-form-item>
+             </el-form>
+        </div>
+
+        <!-- Action buttons -->
         <div class="action-buttons">
           <el-button
-            :type="isEditing ? 'warning' : 'primary'"
+            v-if="!isEditing && !isEditingPassword && !isEditingPhone"
+            type="primary"
             @click="toggleEditMode"
           >
-            {{ isEditing ? "取消编辑" : "编辑信息" }}
+            编辑信息
           </el-button>
+           <el-button
+             v-if="isEditing && !isEditingPassword && !isEditingUsername && !isEditingPhone"
+             type="warning"
+             @click="toggleEditMode"
+           >
+             取消编辑
+           </el-button>
+
+           <el-button
+               v-if="!isEditing && !isEditingPassword && !isEditingPhone"
+               type="default"
+               @click="startPasswordEdit"
+           >
+               修改密码
+           </el-button>
         </div>
-      </div>
-
-      <!-- 修改密码内容 -->
-      <div v-show="activeMenu === 'password'" class="content-panel">
-        <h3 class="panel-title">修改密码</h3>
-        <el-form :model="passwordForm" label-width="80px">
-          <el-form-item label="原密码" required>
-            <el-input v-model="passwordForm.oldPassword" type="password" show-password />
-          </el-form-item>
-          <el-form-item label="新密码" required>
-            <el-input v-model="passwordForm.newPassword" type="password" show-password />
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" @click="handlePasswordUpdate">确认修改</el-button>
-          </el-form-item>
-        </el-form>
-      </div>
-
-      <!-- 修改手机号内容 -->
-      <div v-show="activeMenu === 'phone'" class="content-panel">
-        <h3 class="panel-title">修改手机号</h3>
-        <el-form :model="phoneForm" label-width="100px">
-          <el-form-item label="原手机号" required>
-            <el-input 
-              v-model="phoneForm.oldPhone"
-              placeholder="请输入原手机号"
-              clearable
-            />
-          </el-form-item>
-          <el-form-item label="新手机号" required>
-            <el-input
-              v-model="phoneForm.newPhone"
-              placeholder="请输入新手机号"
-              clearable
-            />
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" @click="handlePhoneUpdate">确认修改</el-button>
-          </el-form-item>
-        </el-form>
       </div>
 
       <!-- 我的收藏内容 -->
       <div v-show="activeMenu === 'favorites'" class="content-panel">
-        <h3 class="panel-title">我的收藏</h3>
+         <h3 class="panel-title">我的收藏</h3>
         <div v-if="favorites.length > 0" class="favorites-list">
           <el-card v-for="item in favorites" :key="item.pid" class="favorite-item">
             <div class="favorite-content">
@@ -208,71 +230,61 @@
         </div>
         <el-empty v-else description="暂无收藏商品"></el-empty>
       </div>
-      
+
       <!-- 主题设置内容 -->
       <div v-show="activeMenu === 'theme'" class="content-panel">
-        <h3 class="panel-title">主题设置</h3>
+         <h3 class="panel-title">主题设置</h3>
         <div class="theme-options">
-          <div 
-            class="theme-option" 
-            :class="{ active: currentTheme === 'default' }" 
+          <div
+            class="theme-option"
+            :class="{ active: currentTheme === 'default' }"
             @click="switchTheme('default')"
           >
             <div class="theme-preview default-theme"></div>
             <span class="theme-name">默认主题</span>
           </div>
-          <div 
-            class="theme-option" 
-            :class="{ active: currentTheme === 'home' }" 
+          <div
+            class="theme-option"
+            :class="{ active: currentTheme === 'home' }"
             @click="switchTheme('home')"
           >
             <div class="theme-preview home-theme"></div>
-            <span class="theme-name">主页风格</span>
+            <span class="theme-name">蓝色科技</span>
+          </div>
+          <div
+            class="theme-option"
+            :class="{ active: currentTheme === 'light' }"
+            @click="switchTheme('light')"
+          >
+            <div class="theme-preview light-theme"></div>
+            <span class="theme-name">明亮简约</span>
           </div>
         </div>
         <div class="theme-description">
-          <p>当前主题: <span class="theme-current">{{ currentTheme === 'default' ? '默认主题' : '主页风格' }}</span></p>
+          <p>当前主题: <span class="theme-current">{{ currentTheme === 'default' ? '默认主题' : currentTheme === 'home' ? '主页风格' : currentTheme === 'light' ? '明亮简约' : '明亮简约' }}</span></p>
           <p class="theme-tip">点击上方主题卡片可切换个人中心的显示风格</p>
         </div>
       </div>
     </div>
-
-    <!-- 修改手机号对话框 -->
-    <modify-phone-dialog
-      :visible="showPhoneModify"
-      @close="showPhoneModify = false"
-      @confirm="handlePhoneUpdate"
-    />
-
-    <!-- 修改密码对话框 -->
-    <modify-password-dialog
-      :visible.sync="showPasswordModify"
-      @close="showPasswordModify = false"
-      @confirm="handlePasswordUpdate"
-    />
   </div>
 </template>
 
 <script>
 import axios from "axios";
 import { mapState, mapActions } from "vuex";
-import ModifyPhoneDialog from "../components/ModifyPhoneDialog.vue";
-import ModifyPasswordDialog from "../components/ModifyPasswordDialog.vue";
 
 export default {
   name: 'UserProfile',
   components: {
-    ModifyPhoneDialog,
-    ModifyPasswordDialog,
   },
   data() {
     return {
       isEditing: false,
+      isEditingPassword: false,
       isEditingUsername: false,
-      showPhoneModify: false,
-      showPasswordModify: false,
-      activeMenu: 'basic', // 当前激活的菜单项
-      currentTheme: 'default', // 当前主题，默认为默认主题
+      isEditingPhone: false,
+      activeMenu: 'basic',
+      currentTheme: 'default',
       editForm: {
         username: "",
       },
@@ -290,7 +302,7 @@ export default {
   computed: {
     ...mapState(["user"]),
     maskedPhone() {
-      return this.user.phone.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2");
+      return this.user.phone ? this.user.phone.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2") : '';
     },
     uploadHeaders() {
       return { Authorization: `Bearer ${this.user.token}` };
@@ -302,33 +314,31 @@ export default {
   created() {
     this.getUserInfo();
     
-    // 从本地存储读取主题设置
     const savedTheme = localStorage.getItem('userProfileTheme');
     if (savedTheme) {
       this.currentTheme = savedTheme;
     }
+    
+    this.editForm.username = this.user.username;
   },
   methods: {
-    ...mapActions(['removeFromFavorites', 'fetchProductDetails']),
+    ...mapActions(['removeFromFavorites', 'fetchProductDetails', 'updateUserBasicInfo', 'updateUserPhone', 'updateUserPassword', 'updateUserUsername', 'updateUserIcon']),
     
     async getUserInfo() {
       try {
         console.log("开始获取用户信息");
         console.log("当前用户状态:", JSON.stringify(this.user));
         
-        // 检查是否有用户token
         if (!this.user.token) {
           this.$message.error("用户未登录，请先登录");
           return;
         }
 
-        // 检查是否有用户ID
         if (!this.user.userId) {
           this.$message.error("用户ID不存在，无法获取用户信息");
           return;
         }
 
-        // 构建请求参数，确保id为整数类型
         const formData = new URLSearchParams();
         formData.append("id", parseInt(this.user.userId, 10));
 
@@ -338,7 +348,6 @@ export default {
           Authorization: `Bearer ${this.user.token}`,
         });
 
-        // 发送请求
         const res = await axios.post("/api/user/getUser", formData, {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
@@ -349,13 +358,10 @@ export default {
         console.log("获取用户信息响应状态:", res.status);
         console.log("获取用户信息响应数据:", res.data);
         
-        // 检查响应数据
         if (res.status === 200) {
           if (res.data) {
-            // 更新用户信息
             const updatedUser = { 
               ...this.user,
-              // 确保使用正确的字段名称
               username: res.data.username || this.user.username,
               phone: res.data.phone || this.user.phone || '',
               icon: res.data.icon || this.user.icon || '',
@@ -365,10 +371,8 @@ export default {
             
             console.log("更新后的用户信息:", updatedUser);
             
-            // 使用Vuex更新用户信息
             this.$store.commit('SET_USER', updatedUser);
             
-            // 更新本地状态
             this.editForm.username = updatedUser.username;
             
             this.$message.success("获取用户信息成功");
@@ -382,7 +386,6 @@ export default {
       } catch (error) {
         console.error("获取用户信息失败:", error);
         
-        // 提供更详细的错误信息
         if (error.response) {
           console.error("错误响应:", error.response);
           this.$message.error(`获取用户信息失败: ${error.response.status} - ${error.response.data?.message || "未知错误"}`);
@@ -397,105 +400,202 @@ export default {
     },
 
     toggleEditMode() {
-      this.isEditing = !this.isEditing;
-      if (!this.isEditing) {
-        this.isEditingUsername = false;
-        this.editForm.username = this.user.username;
+      if (!this.isEditingPassword && !this.isEditingUsername && !this.isEditingPhone) {
+        this.isEditing = !this.isEditing;
+        if (!this.isEditing) {
+          this.isEditingUsername = false;
+          this.isEditingPhone = false;
+          this.editForm.username = this.user.username;
+          this.phoneForm = { oldPhone: '', newPhone: '' };
+        }
       }
     },
 
     startEditUsername() {
-      this.isEditingUsername = true;
-      this.$nextTick(() => {
-        this.$refs.usernameInput.focus();
-      });
+      if (this.isEditing && !this.isEditingPassword && !this.isEditingPhone) {
+        this.isEditingUsername = true;
+        this.editForm.username = this.user.username;
+        this.$nextTick(() => {
+          if (this.$refs.usernameInput) {
+            this.$refs.usernameInput.focus();
+          }
+        });
+      }
     },
 
-    saveUsername() {
-      if (this.editForm.username.trim()) {
-        this.user.username = this.editForm.username;
-      }
+    cancelEditUsername() {
       this.isEditingUsername = false;
+      this.editForm.username = this.user.username;
+    },
+
+    async saveUsername() {
+      if (!this.isEditingUsername) return;
+
+      const newUsername = this.editForm.username.trim();
+      if (!newUsername) {
+        this.$message.warning("用户名不能为空");
+        return;
+      }
+      if (newUsername === this.user.username.trim()) {
+        this.$message.info("用户名未改变");
+        this.cancelEditUsername();
+        return;
+      }
+
+      try {
+        // 调用新的 updateUserUsername action
+        const response = await this.$store.dispatch('updateUserUsername', {
+          id: this.user.userId,
+          newUsername: newUsername
+        });
+
+        if (response && response.data && (response.data.code === 0 || response.data.code === 200)) {
+          this.$message.success("用户名更新成功");
+          this.cancelEditUsername();
+          // 重新拉取后端最新用户信息，确保刷新后用户名一致
+          await this.getUserInfo();
+        } else {
+          this.$message.error(response.data?.message || "用户名更新失败：后端返回非成功状态码");
+          this.cancelEditUsername();
+        }
+      } catch (error) {
+        console.error('保存用户名失败:', error);
+        this.$message.error(error.message || "保存用户名失败，请稍后重试");
+        this.cancelEditUsername();
+      }
+    },
+
+    startEditPhone() {
+      if (this.isEditing && !this.isEditingPassword && !this.isEditingUsername) {
+        this.isEditingPhone = true;
+        this.phoneForm = { oldPhone: '', newPhone: '' };
+      }
+    },
+
+    cancelEditPhone() {
+      this.isEditingPhone = false;
+      this.phoneForm = { oldPhone: '', newPhone: '' };
     },
 
     beforeAvatarUpload(file) {
+      console.log('beforeAvatarUpload 被调用', file);
+      // 校验图片类型和大小
       const isImage = file.type.startsWith("image/");
       const isLt2M = file.size / 1024 / 1024 < 2;
-
       if (!isImage) {
         this.$message.error("只能上传图片文件");
+        return false;
       }
       if (!isLt2M) {
         this.$message.error("头像大小不能超过2MB");
+        return false;
       }
+      // 通过校验后，手动调用头像上传逻辑
+      this.handleAvatarChange(file);
+      // 阻止 el-upload 默认上传
+      return false;
+    },
 
-      return isImage && isLt2M;
+    async handleAvatarChange(file) {
+      console.log('handleAvatarChange 被调用', file);
+      // 1. 上传图片到 /api/image/upload
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('userId', this.user.userId);
+      try {
+        const uploadRes = await axios.post('/api/image/upload', formData);
+        // 兼容后端返回字符串或标准JSON
+        let imageUrl = '';
+        if (typeof uploadRes.data === 'string') {
+          // 提取URL
+          const match = uploadRes.data.match(/https?:\/\/[\w\-./?%&=:@#]+/);
+          imageUrl = match ? match[0] : '';
+        } else if (uploadRes.data && uploadRes.data.data) {
+          imageUrl = uploadRes.data.data;
+        }
+        if (!imageUrl) {
+          this.$message.error('图片上传失败');
+          return;
+        }
+        // 2. 调用更新头像接口
+        const res = await axios.post('/api/user/updateUserIcon', {
+          iconFile: imageUrl,
+          id: this.user.userId
+        }, {
+          headers: { 'Content-Type': 'application/json' }
+        });
+        if (res.data && (res.data.code === 0 || res.data.code === 200)) {
+          this.$message.success('头像更新成功');
+          await this.getUserInfo();
+        } else {
+          this.$message.error(res.data?.message || '头像更新失败');
+        }
+      } catch (err) {
+        this.$message.error('头像更新失败');
+      }
     },
 
     closeProfile() {
+      this.isEditing = false;
+      this.isEditingPassword = false;
+      this.isEditingUsername = false;
+      this.isEditingPhone = false;
+      this.phoneForm = { oldPhone: '', newPhone: '' };
+      this.passwordForm = { oldPassword: '', newPassword: '' };
       this.$emit("close");
     },
 
-    triggerAvatarUpload() {
-      document.querySelector(".avatar-uploader .el-upload__input").click();
-    },
-
-    showPhoneDialog() {
-      this.showPhoneModify = true;
-    },
-
-    showPasswordDialog() {
-      this.showPasswordModify = true;
-    },
-
     async handlePasswordUpdate() {
-      // 如果是从侧边栏直接修改密码
-      if (this.activeMenu === 'password') {
-        const phoneReg = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,20}$/;
-        
-        if (!this.passwordForm.oldPassword) {
-          this.$message.warning("请输入原密码");
-          return;
-        }
-        if (this.passwordForm.oldPassword !== this.user.password) {
-          this.$message.warning("原密码输入错误");
-          return;
-        }
-        if (!this.passwordForm.newPassword) {
-          this.$message.warning("请输入新密码");
-          return;
-        }
-        if (!phoneReg.test(this.passwordForm.newPassword)) {
-          this.$message.warning("新密码需 8 到 20 位，包含数字、大写字母、小写字母和特殊符号至少各一位");
-          return;
-        }
-        if (this.passwordForm.newPassword === this.passwordForm.oldPassword) {
-          this.$message.warning("新密码不能与原密码相同");
-          return;
-        }
+      const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,20}$/;
 
-        try {
-          const response = await this.$store.dispatch('updateUserInfo', {
-            userId: this.user.userId,
-            password: this.passwordForm.newPassword,
-            oldPassword: this.passwordForm.oldPassword
-          });
+      if (!this.passwordForm.oldPassword) {
+        this.$message.warning("请输入原密码");
+        return;
+      }
 
-          if (response.code === 200) {
-            this.$message.success("密码修改成功");
-            this.passwordForm.oldPassword = "";
-            this.passwordForm.newPassword = "";
-          } else {
-            this.$message.error(response.message || "密码修改失败");
-          }
-        } catch (error) {
-          console.error('密码修改请求出错:', error);
-          this.$message.error("请求出错，请稍后重试");
+      if (!this.passwordForm.newPassword) {
+        this.$message.warning("请输入新密码");
+        return;
+      }
+      if (!passwordRegex.test(this.passwordForm.newPassword)) {
+        this.$message.warning("新密码需 8 到 20 位，包含数字、大写字母、小写字母和特殊符号至少各一位");
+        return;
+      }
+      if (this.passwordForm.newPassword === this.passwordForm.oldPassword) {
+        this.$message.warning("新密码不能与原密码相同");
+        return;
+      }
+
+      try {
+        const response = await this.$store.dispatch('updateUserPassword', {
+          id: this.user.userId,
+          password: this.passwordForm.oldPassword,
+          newPassword: this.passwordForm.newPassword
+        });
+
+        if (response.data && response.data.code === 200) {
+          this.$message.success("密码修改成功，请用新密码重新登录");
+          this.passwordForm = { oldPassword: "", newPassword: "" };
+          this.isEditingPassword = false;
+          // 自动登出并跳转到登录页
+          await this.$store.dispatch('logout');
+          this.$router.push('/login');
+          return;
+        } else {
+          this.$message.error(response.data?.message || "密码修改失败");
         }
-      } else {
-        // 从对话框修改密码的原有逻辑
-        this.$message.success("密码修改成功");
-        this.showPasswordModify = false;
+      } catch (error) {
+        console.error('密码修改请求出错:', error);
+        if (error.response) {
+          console.error("错误响应数据:", error.response.data);
+          this.$message.error(`请求出错：${error.response.data?.message || error.message || "未知后端错误"}`);
+        } else if (error.request) {
+          console.error("请求未收到响应:", error.request);
+          this.$message.error("服务器无响应，请检查网络连接");
+        } else {
+          console.error("请求配置错误:", error.message);
+          this.$message.error(`请求错误: ${error.message || "未知错误"}`);
+        }
       }
     },
 
@@ -513,11 +613,9 @@ export default {
         })
         .then(() => {
           console.log("3. 退出成功");
-          this.closeProfile(); // 关闭用户信息弹窗
-          // 处理路由跳转错误
+          this.closeProfile();
           this.$router.push("/").catch((error) => {
             if (error.name === "NavigationDuplicated") {
-              // 忽略路由重复跳转错误
               return;
             }
             console.error("路由跳转错误:", error);
@@ -529,72 +627,43 @@ export default {
           }
         });
     },
-    // 简化头像上传成功处理，仅提示成功
-    handleAvatarSuccess(response) {
-      if (response.code === 0 && response.data.url) {
-        this.user.icon = response.data.url;
-        this.$message.success("头像上传成功");
-      } else {
-        this.$message.error(response.message || "头像上传失败");
-      }
-    },
-    // 处理手机号更新
-    async handlePhoneUpdate(data) {
-      // 如果是从侧边栏直接修改手机号
-      if (this.activeMenu === 'phone') {
-        const phoneReg = /^1[3-9]\d{9}$/;
 
-        if (!phoneReg.test(this.phoneForm.oldPhone)) {
-          this.$message.warning("原手机号格式错误");
-          return;
-        }
-
-        if (!phoneReg.test(this.phoneForm.newPhone)) {
-          this.$message.warning("新手机号格式错误");
-          return;
-        }
-
-        if (this.phoneForm.oldPhone === this.phoneForm.newPhone) {
-          this.$message.warning("新手机号不能与原手机号相同");
-          return;
-        }
-
-        try {
-          const response = await this.$store.dispatch('updateUserPhone', {
-            phone: this.phoneForm.newPhone
-          });
-
-          if (response.code === 200) {
-            this.$message.success("手机号修改成功");
-            this.phoneForm.oldPhone = "";
-            this.phoneForm.newPhone = "";
-          } else {
-            this.$message.error(response.message || "手机号修改失败");
-          }
-        } catch (error) {
-          console.error('手机号修改请求出错:', error);
-          this.$message.error("请求出错，请稍后重试");
-        }
-      } else {
-        // 从对话框修改手机号的原有逻辑
-        if (data && data.newPhone) {
-          this.user.phone = data.newPhone;
-          this.$message.success("手机号修改成功");
-        }
-        this.showPhoneModify = false;
-      }
-    },
-    
-    // 切换主题
     switchTheme(theme) {
       if (this.currentTheme === theme) return;
       
       this.currentTheme = theme;
       
-      // 保存用户主题偏好到本地存储
       localStorage.setItem('userProfileTheme', theme);
       
-      this.$message.success(`已切换到${theme === 'default' ? '默认主题' : '主页风格'}`);
+      this.$message.success(`已切换到${theme === 'default' ? '默认主题' : theme === 'home' ? '主页风格' : theme === 'light' ? '明亮简约' : '明亮简约'}`);
+    },
+
+    viewProductDetails(product) {
+      if (product && (product.pid || product.id)) {
+        const productId = product.pid || product.id;
+        this.closeProfile();
+        this.$router.push({ name: 'ProductDetail', params: { id: productId } });
+      } else {
+        console.error('Invalid product object for viewing details:', product);
+        this.$message.error('无法查看商品详情，商品信息不完整');
+      }
+    },
+
+    startPasswordEdit() {
+      this.toggleEditMode();
+      this.isEditingPassword = true;
+      this.passwordForm = { oldPassword: '', newPassword: '' };
+    },
+
+    cancelPasswordEdit() {
+      this.isEditingPassword = false;
+      this.passwordForm = { oldPassword: '', newPassword: '' };
+    },
+
+    getAvatarUrl(icon) {
+      if (!icon) return '';
+      if (icon.startsWith('http')) return icon;
+      return `http://localhost:8080/${icon.replace(/^\//, '')}`;
     },
   },
 };
@@ -662,7 +731,6 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 
@@ -784,79 +852,37 @@ export default {
   color: #02a6b5;
 }
 
-/* 用户头像和用户名 */
-.user-header {
+/* Sidebar User Info */
+.sidebar-user-info {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px;
+  padding: 20px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* 主页风格主题 - 用户头部 */
-.user-info-container[class*="theme-home"] .user-header {
-  border-bottom: 1px solid rgba(2, 166, 181, 0.3);
+.user-info-container[class*="theme-home"] .sidebar-user-info {
+   border-bottom: 1px solid rgba(2, 166, 181, 0.3);
 }
 
-.avatar-wrapper {
-  position: relative;
-  margin-bottom: 15px;
-  padding-bottom: 25px;
+.sidebar-avatar {
+   border: 2px solid #409eff;
+   margin-bottom: 10px;
 }
 
-.avatar-uploader {
-  cursor: pointer;
-  position: relative;
+.user-info-container[class*="theme-home"] .sidebar-avatar {
+   border: 2px solid #02a6b5;
 }
 
-.user-avatar {
-  border: 2px solid #409eff;
-  background: #f0f2f5;
+.sidebar-username {
+   color: #fff;
+   font-size: 16px;
+   font-weight: bold;
 }
 
-/* 主页风格主题 - 用户头像 */
-.user-info-container[class*="theme-home"] .user-avatar {
-  border: 2px solid #02a6b5;
-}
-
-.avatar-edit-hint {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  text-align: center;
-  color: #409eff;
-  font-size: 13px;
-  cursor: pointer;
-  transition: color 0.3s;
-  white-space: nowrap;
-  line-height: 1.5;
-}
-
-/* 主页风格主题 - 头像编辑提示 */
-.user-info-container[class*="theme-home"] .avatar-edit-hint {
-  color: #02a6b5;
-}
-
-.avatar-edit-hint:hover {
-  color: #66b1ff;
-}
-
-/* 主页风格主题 - 头像编辑提示悬停 */
-.user-info-container[class*="theme-home"] .avatar-edit-hint:hover {
-  color: #68f1fa;
-}
-
-.username-display {
-  font-size: 16px;
-  font-weight: bold;
-  color: #fff;
-  margin-top: 5px;
-}
-
-/* 主页风格主题 - 用户名显示 */
-.user-info-container[class*="theme-home"] .username-display {
-  text-shadow: 0 0 10px rgba(2, 166, 181, 0.5);
+/* 主页风格主题 - 侧边栏用户名 */
+.user-info-container[class*="theme-home"] .sidebar-username {
+   text-shadow: 0 0 10px rgba(2, 166, 181, 0.5);
 }
 
 /* 侧边栏菜单 */
@@ -939,7 +965,7 @@ export default {
 .content-panel {
   background-color: #fff;
   border-radius: 8px;
-  padding: 20px;
+  padding: 30px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
 }
@@ -978,11 +1004,12 @@ export default {
 
 .panel-title {
   margin-top: 0;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
   color: #409eff;
-  font-size: 18px;
+  font-size: 20px;
   border-bottom: 1px solid #eee;
-  padding-bottom: 10px;
+  padding-bottom: 15px;
+  font-weight: bold;
 }
 
 /* 主页风格主题 - 面板标题 */
@@ -992,228 +1019,428 @@ export default {
   border-bottom: 1px solid rgba(2, 166, 181, 0.3);
 }
 
-/* 表单样式 */
-.username-edit-wrapper,
-.phone-edit-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
+/* 基本信息面板内部布局 */
+.basic-info-panel .user-overview {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
 }
 
-.edit-icon {
-  color: #409eff;
-  cursor: pointer;
-  transition: color 0.3s;
+/* 主页风格主题下的用户信息概览样式 */
+.user-info-container[class*="theme-home"] .basic-info-panel .user-overview {
+    border-bottom: 1px solid rgba(2, 166, 181, 0.3);
 }
 
-.edit-icon:hover {
-  color: #337ecc;
+.basic-info-panel .avatar-display-wrapper {
+    position: relative;
+    flex-shrink: 0;
 }
 
-/* 主页风格主题 - 编辑图标 */
-.user-info-container[class*="theme-home"] .edit-icon {
-  color: #02a6b5;
+/* Customize avatar size if needed */
+.basic-info-panel .user-avatar {
+   /* size is set via el-avatar prop */
+   border: 3px solid #409eff;
+}
+/* 主页风格主题下的头像边框 */
+.user-info-container[class*="theme-home"] .basic-info-panel .user-avatar {
+   border: 2px solid #02a6b5;
 }
 
-.user-info-container[class*="theme-home"] .edit-icon:hover {
-  color: #68f1fa;
+/* Position and style for avatar edit hint */
+.basic-info-panel .avatar-edit-hint {
+   position: absolute;
+   bottom: 0;
+   left: 0;
+   right: 0;
+   text-align: center;
+   color: #fff;
+   background-color: rgba(0, 0, 0, 0.5);
+   font-size: 13px;
+   cursor: pointer;
+   transition: background-color 0.3s;
+   white-space: nowrap;
+   line-height: 1.5;
+   padding: 2px 0;
 }
 
-.action-buttons {
-  margin-top: 24px;
-  display: flex;
-  justify-content: flex-start;
-  gap: 16px;
+.basic-info-panel .avatar-edit-hint:hover {
+   background-color: rgba(0, 0, 0, 0.7);
 }
 
-/* 输入框样式 */
-.content-panel ::v-deep .el-input__inner {
-  color: #666 !important;
-  background-color: #f8f9fa;
-  border: 1px solid #e4e7ed;
-  border-radius: 4px;
-  padding: 8px 12px;
-  transition: all 0.3s;
+/* User details display (username and phone) */
+.basic-info-panel .user-details-display {
+    flex: 1;
 }
 
-.content-panel ::v-deep .el-input.is-active .el-input__inner {
-  border-color: #409eff;
-  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
+/* Adjust el-descriptions item style if needed */
+.basic-info-panel ::v-deep .el-descriptions-item__label {
+    width: 100px;
+    font-weight: bold;
+    color: #606266;
+    position: relative; /* For absolute positioning of edit icon */
+    padding-right: 30px; /* Add space for the icon */
 }
 
-/* 主页风格主题 - 输入框 */
-.user-info-container[class*="theme-home"] .content-panel ::v-deep .el-input__inner {
-  background: rgba(255, 255, 255, 0.05) !important;
-  border: 1px solid rgba(2, 166, 181, 0.3) !important;
-  color: #fff !important;
+.user-info-container[class*="theme-home"] .basic-info-panel ::v-deep .el-descriptions-item__label {
+    color: rgba(255, 255, 255, 0.8);
 }
 
-.user-info-container[class*="theme-home"] .content-panel ::v-deep .el-input.is-active .el-input__inner {
-  border-color: #02a6b5 !important;
-  box-shadow: 0 0 0 2px rgba(2, 166, 181, 0.1);
+.basic-info-panel ::v-deep .el-descriptions-item__content {
+    color: #303133;
+    display: flex; /* Use flexbox to align text and edit icon */
+    align-items: center;
+    gap: 10px; /* Space between text and icon */
 }
 
-/* 主题设置样式 */
+.user-info-container[class*="theme-home"] .basic-info-panel ::v-deep .el-descriptions-item__content {
+     color: #ffffff;
+}
+
+/* Style for the edit icon next to username/phone */
+.basic-info-panel .edit-icon {
+    cursor: pointer;
+    color: #409eff; /* Default icon color */
+    font-size: 16px;
+    transition: color 0.2s ease;
+}
+
+.user-info-container[class*="theme-home"] .basic-info-panel .edit-icon {
+     color: #02a6b5;
+}
+
+.basic-info-panel .edit-icon:hover {
+    color: #66b1ff; /* Hover color */
+}
+
+.user-info-container[class*="theme-home"] .basic-info-panel .edit-icon:hover {
+     color: #04d9e3;
+}
+
+/* Style for the username input and buttons when editing inline */
+.basic-info-panel .el-descriptions-item__content > .el-input {
+    flex-grow: 1; /* Allow input to take available space */
+    max-width: 200px; /* Limit input width if needed */
+}
+
+.basic-info-panel .el-descriptions-item__content > .el-button {
+    flex-shrink: 0; /* Prevent buttons from shrinking */
+}
+
+/* Hide the edit icon next to phone number in basic info display */
+.basic-info-panel .phone-display-wrapper .edit-icon {
+    display: none;
+}
+
+/* Form styles within basic info panel */
+/* Modify phone section is now standalone */
+.basic-info-panel .modify-phone-section {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px dashed #dcdfe6;
+}
+
+/* 主页风格主题下的手机修改区域样式 */
+.user-info-container[class*="theme-home"] .basic-info-panel .modify-phone-section {
+    border-top: 1px dashed rgba(2, 166, 181, 0.3);
+}
+
+.basic-info-panel .sub-panel-title {
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 18px;
+    color: #303133;
+    font-weight: bold;
+}
+/* 主页风格主题下的子面板标题 */
+.user-info-container[class*="theme-home"] .basic-info-panel .sub-panel-title {
+    color: #fff;
+}
+
+/* Adjust form item margin if needed */
+.basic-info-panel .el-form-item {
+    margin-bottom: 20px;
+}
+
+/* Adjust action buttons spacing */
+.basic-info-panel .action-buttons {
+    margin-top: 40px;
+    display: flex;
+    gap: 15px;
+    justify-content: flex-start;
+}
+
+/* Ensure input/button styles are consistent within basic info panel */
+.basic-info-panel ::v-deep .el-input__inner {
+    border-radius: 4px;
+}
+
+.basic-info-panel ::v-deep .el-button {
+    border-radius: 4px;
+    padding: 10px 20px;
+}
+
+/* Remove the username action buttons margin style as inline buttons are used */
+/* .username-action-buttons { */
+/*     margin-top: 15px; */
+/*     margin-bottom: 0; */
+/*     text-align: left; */
+/* } */
+
+/* Style for the phone form's confirm button - adjust margin as needed */
+.modify-phone-section .el-form-item__content .el-button--primary {
+    margin-left: 0 !important; /* Override default form-item button margin */
+}
+
+
+
+/* 主题选项容器 */
 .theme-options {
   display: flex;
-  gap: 20px;
+  gap: 30px; /* Add some space between options */
   margin-bottom: 20px;
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
 }
 
 .theme-option {
-  cursor: pointer;
+  padding: 15px;
+  border: 1px solid #dcdfe6;
   border-radius: 8px;
-  overflow: hidden;
-  border: 2px solid transparent;
-  transition: all 0.3s ease;
-  width: 120px;
+  display: flex;
+  flex-direction: column; /* Stack preview and name */
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  background-color: #fff;
+  width: 150px; /* Give options a fixed width */
+  text-align: center;
 }
 
 .theme-option:hover {
-  transform: translateY(-5px);
+  border-color: #409eff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .theme-option.active {
   border-color: #409eff;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
+  background-color: #ecf5ff;
 }
 
-/* 主页风格主题 - 主题选项激活 */
-.user-info-container[class*="theme-home"] .theme-option.active {
-  border-color: #02a6b5;
-}
-
+/* 主题预览区域 */
 .theme-preview {
-  height: 80px;
-  width: 100%;
+  width: 120px; /* Set width */
+  height: 80px; /* Set height */
+  border-radius: 4px;
+  margin-bottom: 10px; /* Space below preview */
+  border: 1px solid #dcdfe6;
+  background-color: #e4e7ed;
+  transition: all 0.3s ease;
+  overflow: hidden; /* Hide overflow */
+  position: relative; /* For absolute positioning of theme styles if needed */
 }
 
-.default-theme {
-  background-color: #2c3e50;
-  position: relative;
+/* 默认主题预览 */
+.theme-preview.default-theme {
+  background: linear-gradient(to bottom right, #409eff, #66b1ff);
 }
 
-.default-theme::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to right, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.1) 20%, transparent 20%);
+/* 主页风格主题预览 */
+.theme-preview.home-theme {
+  background: linear-gradient(to bottom right, #000428, #004e92);
 }
 
-.home-theme {
-  background: linear-gradient(135deg, #000428 0%, #004e92 100%);
-  position: relative;
-}
-
-.home-theme::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: 
-    radial-gradient(circle at 20% 35%, rgba(2, 166, 181, 0.2) 0%, transparent 25%),
-    radial-gradient(circle at 75% 65%, rgba(2, 166, 181, 0.2) 0%, transparent 25%);
+.theme-preview.light-theme {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border: 1px solid #e0e0e0;
 }
 
 .theme-name {
-  display: block;
-  text-align: center;
-  padding: 8px 0;
-  background-color: #f5f7fa;
-  color: #333;
   font-size: 14px;
+  color: #606266;
 }
 
-/* 主页风格主题 - 主题名称 */
-.user-info-container[class*="theme-home"] .theme-name {
-  background-color: rgba(2, 166, 181, 0.1);
-  color: #fff;
+.theme-option.active .theme-name {
+  color: #409eff;
+  font-weight: bold;
 }
 
 .theme-description {
-  margin-top: 20px;
-  padding: 15px;
-  background-color: #f8f9fa;
-  border-radius: 4px;
-  border-left: 4px solid #409eff;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+  color: #606266;
+  font-size: 14px;
 }
 
-/* 主页风格主题 - 主题描述 */
-.user-info-container[class*="theme-home"] .theme-description {
-  background-color: rgba(2, 166, 181, 0.1);
-  border-left: 4px solid #02a6b5;
+.user-info-container[class*="theme-home"] .content-area {
+  background: linear-gradient(135deg, #000428 0%, #004e92 100%);
 }
 
-.theme-current {
-  font-weight: bold;
-  color: #409eff;
+/* 主页风格主题下，基本信息表格深蓝背景（包括td） */
+.user-info-container[class*="theme-home"] .basic-info-panel ::v-deep .el-descriptions table,
+.user-info-container[class*="theme-home"] .basic-info-panel ::v-deep .el-descriptions tr,
+.user-info-container[class*="theme-home"] .basic-info-panel ::v-deep .el-descriptions td {
+  background: rgba(0, 43, 84, 0.95) !important;
 }
 
-/* 主页风格主题 - 当前主题 */
-.user-info-container[class*="theme-home"] .theme-current {
-  color: #02a6b5;
-  text-shadow: 0 0 10px rgba(2, 166, 181, 0.5);
+/* 明亮简约主题下左侧边栏字体、icon、选中项 */
+.user-info-container.theme-light .user-sidebar {
+  background: #fff !important;
+  color: #222 !important;
+}
+.user-info-container.theme-light .sidebar-username,
+.user-info-container.theme-light .sidebar-title {
+  color: #222 !important;
+}
+.user-info-container.theme-light .menu-item {
+  color: #222 !important;
+}
+.user-info-container.theme-light .menu-item.active {
+  background: #e3f0ff !important;
+  color: #409eff !important;
+  border-left-color: #409eff !important;
+}
+.user-info-container.theme-light .menu-item i {
+  color: #409eff !important;
+}
+.user-info-container.theme-light .logout-button .el-button {
+  background: #409eff !important;
+  color: #fff !important;
 }
 
-.theme-tip {
-  margin-top: 10px;
-  font-size: 13px;
-  color: #909399;
+/* 主页风格主题下侧边栏和字体 */
+.user-info-container.theme-home {
+  background: linear-gradient(135deg, #000428 0%, #004e92 100%) !important;
+}
+.user-info-container.theme-home .user-sidebar {
+  background: #002b54 !important;
+  color: #fff !important;
+  border-right: 1px solid #02a6b5 !important;
+}
+.user-info-container.theme-home .sidebar-username,
+.user-info-container.theme-home .sidebar-title {
+  color: #02a6b5 !important;
+}
+.user-info-container.theme-home .menu-item {
+  color: #fff !important;
+}
+.user-info-container.theme-home .menu-item.active {
+  background: #013a63 !important;
+  color: #02a6b5 !important;
+  border-left-color: #02a6b5 !important;
+}
+.user-info-container.theme-home .menu-item i {
+  color: #02a6b5 !important;
+}
+.user-info-container.theme-home .logout-button .el-button {
+  background: #02a6b5 !important;
+  color: #fff !important;
 }
 
-/* 主页风格主题 - 主题提示 */
-.user-info-container[class*="theme-home"] .theme-tip {
-  color: rgba(255, 255, 255, 0.7);
+/* 默认主题下侧边栏和字体 */
+.user-info-container.theme-default {
+  background: #f5f7fa !important;
+}
+.user-info-container.theme-default .user-sidebar {
+  background: #2c3e50 !important;
+  color: #fff !important;
+  border-right: 1px solid #409eff !important;
+}
+.user-info-container.theme-default .sidebar-username,
+.user-info-container.theme-default .sidebar-title {
+  color: #fff !important;
+}
+.user-info-container.theme-default .menu-item {
+  color: #fff !important;
+}
+.user-info-container.theme-default .menu-item.active {
+  background: #409eff !important;
+  color: #fff !important;
+  border-left-color: #fff !important;
+}
+.user-info-container.theme-default .menu-item i {
+  color: #fff !important;
+}
+.user-info-container.theme-default .logout-button .el-button {
+  background: #409eff !important;
+  color: #fff !important;
 }
 
-/* 响应式调整 */
-@media (max-width: 768px) {
-  .user-sidebar {
-    width: 200px;
-  }
-  .content-area {
-    left: 200px;
-    width: calc(100% - 200px);
-  }
-  .theme-options {
-    flex-direction: column;
-    align-items: center;
-  }
+/* 蓝色科技主题下内容面板字体高亮 */
+.user-info-container.theme-home .content-panel,
+.user-info-container.theme-home .content-panel * {
+  color: #fff !important;
+}
+/* 蓝色科技主题下收藏卡片标题、价格、评分等字体高亮 */
+.user-info-container.theme-home .favorite-item,
+.user-info-container.theme-home .favorite-item * {
+  color: #fff !important;
+}
+.user-info-container.theme-home .favorite-name {
+  color: #fff !important;
+}
+.user-info-container.theme-home .discount-price {
+  color: #F56C6C !important;
+}
+.user-info-container.theme-home .normal-price {
+  color: #b0c4de !important;
+}
+.user-info-container.theme-home .favorite-rating {
+  color: #FFD700 !important;
+}
+/* 蓝色科技主题下按钮文字高亮 */
+.user-info-container.theme-home .el-button,
+.user-info-container.theme-home .el-button span {
+  color: #fff !important;
+}
+/* 蓝色科技主题下表格内容字体高亮 */
+.user-info-container.theme-home .basic-info-panel ::v-deep .el-descriptions-item__content,
+.user-info-container.theme-home .basic-info-panel ::v-deep .el-descriptions-item__content span,
+.user-info-container.theme-home .basic-info-panel ::v-deep .el-descriptions-item__content input {
+  color: #fff !important;
+}
+/* 蓝色科技主题下收藏卡片按钮背景色和icon */
+.user-info-container.theme-home .favorite-actions .el-button {
+  background: #02a6b5 !important;
+  color: #fff !important;
+  border: none !important;
+}
+.user-info-container.theme-home .favorite-actions .el-button .el-icon-delete {
+  color: #fff !important;
+}
+.user-info-container.theme-home .favorite-actions .el-button .el-icon-view {
+  color: #fff !important;
 }
 
-@media (max-width: 640px) {
-  .username-edit-wrapper,
-  .phone-edit-wrapper {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .edit-icon {
-    margin-left: 0;
-    margin-top: 8px;
-  }
+/* 蓝色科技主题下基本信息表格背景色统一为深蓝色 */
+.user-info-container.theme-home .basic-info-panel ::v-deep .el-descriptions,
+.user-info-container.theme-home .basic-info-panel ::v-deep .el-descriptions table,
+.user-info-container.theme-home .basic-info-panel ::v-deep .el-descriptions tr,
+.user-info-container.theme-home .basic-info-panel ::v-deep .el-descriptions td,
+.user-info-container.theme-home .basic-info-panel ::v-deep .el-descriptions-item__label,
+.user-info-container.theme-home .basic-info-panel ::v-deep .el-descriptions-item__content {
+  background: rgba(0, 43, 84, 0.85) !important;
+  border-color: #02a6b5 !important;
 }
-
-/* 动画效果 */
-@keyframes slideInLeft {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(0);
-  }
+/* 蓝色科技主题下按钮背景色高亮蓝色，去除白色底 */
+.user-info-container.theme-home .el-button {
+  background: #02a6b5 !important;
+  color: #fff !important;
+  border: none !important;
 }
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+.user-info-container.theme-home .el-button[type="default"] {
+  background: #013a63 !important;
+  color: #fff !important;
+}
+.user-info-container.theme-home .el-button[type="warning"] {
+  background: #f39c12 !important;
+  color: #fff !important;
+}
+.user-info-container.theme-home .el-button[type="info"] {
+  background: #34495e !important;
+  color: #fff !important;
 }
 </style>

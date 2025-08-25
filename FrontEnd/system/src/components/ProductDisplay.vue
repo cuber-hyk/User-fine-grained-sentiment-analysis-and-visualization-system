@@ -2,8 +2,8 @@
   <div class="product-display" :class="{'fullscreen-mode': fullscreen}">
     <h2 class="panel-title">商品展示</h2>
     <div v-if="productDetails" class="product-content">
-      <h3 class="product-name">{{ productDetails.name.trim() }}</h3>
-      <div class="product-image">
+      <h3 class="product-name">{{ productDetails.name?.trim() ?? '' }}</h3>
+      <div v-if="productDetails.image_url" class="product-image">
         <el-image :src="productDetails.image_url" fit="cover">
           <div slot="error" class="image-slot">
             <i class="el-icon-picture-outline"></i>
@@ -32,7 +32,7 @@
       <div class="product-info">
         <div class="info-item">
           <i class="el-icon-star-on"></i>
-          <span class="star">评分: {{ productDetails.stars.trim() }}</span>
+          <span class="star">评分: {{ productDetails.stars?.trim() ?? '' }}</span>
         </div>
        
         <div class="info-item price">
@@ -110,36 +110,24 @@ export default {
       this.$store.commit('ADD_TO_COMPARE_LIST', this.productDetails);
       this.$router.push('/Compare'); // 跳转到对比页面
     },
-    // 检查是否在主页面，如果是则重置状态
-    checkAndResetState() {
-      // 当路由为主页时，强制重置商品详情状态
-      if (this.currentRoute === '/home') {
-        // 检查是否为HomePage组件的子组件
-        if (this.$parent && this.$parent.$options && this.$parent.$options.name === 'HomePage') {
-          console.log('在主页面，重置商品详情状态');
-          // 直接重置商品详情，不需要额外条件判断
-          this.$store.commit('SET_PRODUCT_DETAILS', null);
-        }
-      }
-    }
   },
   // 监听路由变化
   watch: {
-    currentRoute: {
-      handler() {
-        this.checkAndResetState();
-      },
-      immediate: true
-    }
+    // currentRoute: {
+    //   handler() {
+    //     this.checkAndResetState();
+    //   },
+    //   immediate: true
+    // }
   },
   // 组件激活时检查状态
-  activated() {
-    this.checkAndResetState();
-  },
+  // activated() {
+  //   this.checkAndResetState();
+  // },
   // 组件挂载后检查状态
-  mounted() {
-    this.checkAndResetState();
-  }
+  // mounted() {
+  //   this.checkAndResetState();
+  // }
 };
 </script>
 

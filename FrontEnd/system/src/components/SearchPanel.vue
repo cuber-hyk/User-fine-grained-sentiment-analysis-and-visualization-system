@@ -101,10 +101,7 @@ export default {
   gap: 20px;
 }
 
-.search-box {
-  /* padding: 20px; */
 
-}
 .flex-1{
   color: #030303 !important;
 }

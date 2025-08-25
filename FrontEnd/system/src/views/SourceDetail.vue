@@ -5,13 +5,14 @@
       <el-button icon="el-icon-back" @click="goBack">返回</el-button>
     </div>
     <div class="content">
-      <source-chart class="full-panel" />
+      <source-chart class="full-panel" :product-id="currentProductId"/>
     </div>
   </div>
 </template>
 
 <script>
 import SourceChart from "@/components/SourceChart.vue";
+import { mapState } from 'vuex';
 
 export default {
   name: "SourceDetail",
@@ -22,6 +23,11 @@ export default {
     goBack() {
       this.$router.push("/home");
     }
+  },
+  computed: {
+    ...mapState({
+      currentProductId: state => state.currentProduct ? state.currentProduct.pid : null
+    })
   }
 };
 </script>

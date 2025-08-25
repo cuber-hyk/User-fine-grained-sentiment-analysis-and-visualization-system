@@ -36,14 +36,14 @@
             <i class="el-icon-full-screen"></i>
           </div>
           <!-- <h3 class="panel-title">商品详情</h3> -->
-          <product-display class="panel" />
+          <product-display class="panel" :product-id="currentProductId" />
         </div>
         <div class="panel-wrapper">
           <div class="detail-button" @click="navigateTo('sentiment-detail')">
             <i class="el-icon-full-screen"></i>
           </div>
           <!-- <h3 class="panel-title">情感极性分析</h3> -->
-          <sentiment-chart class="panel" />
+          <sentiment-chart class="panel" :product-id="currentProductId" />
         </div>
       </div>
       <div class="row">
@@ -55,23 +55,23 @@
           <trend-chart class="panel" />
         </div>
         <div class="panel-wrapper">
-          <div class="detail-button" @click="navigateTo('reviews-detail')">
+          <div class="detail-button" @click="navigateTo('aspect-opinions-detail')">
             <i class="el-icon-full-screen"></i>
           </div>
-          <!-- <h3 class="panel-title">评论分析</h3> -->
-          <reviews-display class="panel" />
+          <!-- <h3 class="panel-title">主题挖掘分析</h3> -->
+          <aspect-opinions-chart :initAspect="activeAspect" class="panel" :product-id="currentProductId" />
         </div>
         <div class="panel-wrapper">
           <div class="detail-button" @click="navigateTo('source-detail')">
             <i class="el-icon-full-screen"></i>
           </div>
-          <!-- <h3 class="panel-title">数据来源展示</h3> -->
-          <source-chart class="panel" />
+          <!-- <h3 class="panel-title">数据来源分析</h3> -->
+          <source-chart class="panel" :product-id="currentProductId" />
         </div>
       </div>
+      <!-- 添加 UserProfile 组件，通过 v-if 控制显示 -->
+      <user-profile v-if="showUserProfile" @close="showUserProfile = false" />
     </div>
-    <!-- 添加 UserProfile 组件，通过 v-if 控制显示 -->
-    <user-profile v-if="showUserProfile" @close="showUserProfile = false" />
   </div>
 </template>
 
@@ -81,10 +81,11 @@ import SearchPanel from "@/components/SearchPanel.vue";
 import ProductDisplay from "@/components/ProductDisplay.vue";
 import SentimentChart from "@/components/SentimentChart.vue";
 import TrendChart from "@/components/TrendChart.vue";
-import ReviewsDisplay from "@/components/ReviewsDisplay.vue";
+// 已删除冗余的ReviewsDisplay组件
 import SourceChart from "@/components/SourceChart.vue";
 import UserProfile from "@/components/UserProfile.vue"; // 引入 UserProfile 组件
-import { mockProductDetails, mockTrendsData } from "@/mock/mockData.js"; // 导入模拟数据
+import AspectOpinionsChart from "@/components/AspectOpinionsChart.vue";
+// import { mockProductDetails, mockTrendsData } from "@/mock/mockData.js"; // 导入模拟数据 (移除)
 
 export default {
   name: "HomePage",
@@ -93,37 +94,51 @@ export default {
     ProductDisplay,
     SentimentChart,
     TrendChart,
-    ReviewsDisplay,
+    // 已删除冗余的ReviewsDisplay组件
     SourceChart,
-    UserProfile, // 注册 UserProfile 组件
+    UserProfile,
+    AspectOpinionsChart,
   },
   data() {
     return {
-      showUserProfile: false // 控制 UserProfile 组件的显示与隐藏
+      showUserProfile: false
     };
   },
   computed: {
     ...mapState({
       username: (state) => state.user.username,
       user: (state) => state.user,
+      currentProductId: (state) => state.currentProduct ? state.currentProduct.pid : null,
+      activeAspect: (state) => state.activeAspect
     }),
   },
+  watch: { // 添加 watcher 监听 currentProductId 变化
+      currentProductId(newVal, oldVal) {
+          // 当 currentProductId 有效值且发生变化时，触发数据获取
+          if (newVal && newVal !== oldVal) {
+              console.log('currentProductId changed to:', newVal); // 调试信息
+              this.fetchProductDetails({ pid: newVal });
+          }
+           // 可以根据需要处理 newVal 为 null 的情况，例如清空图表数据
+           if (!newVal && oldVal) {
+               console.log('currentProductId is now null, consider clearing data in store if necessary.'); // 调试信息
+               // 可以在 store 中添加一个 action 或 mutation 来清空当前商品数据
+           }
+      }
+  },
   methods: {
-    ...mapActions(["fetchUserInfo"]),
+    ...mapActions(["fetchUserInfo", "fetchProductDetails"]), // 映射 fetchProductDetails action
     async goToUserProfile() {
       try {
-        // 点击时再次触发获取信息的请求
         await this.fetchUserInfo();
-        this.showUserProfile = true; // 显示 UserProfile 组件
+        this.showUserProfile = true;
       } catch (error) {
         console.error("获取用户信息失败:", error);
       }
     },
-    // 导航到详情页面
     navigateTo(route) {
       this.$router.push(`/${route}`);
-      
-      // 触发窗口resize事件，确保图表在新页面中正确渲染
+
       this.$nextTick(() => {
         window.dispatchEvent(new Event('resize'));
       });
@@ -132,21 +147,40 @@ export default {
   async created() {
     if (this.user.userId) {
       try {
-        // 登录后触发获取信息的请求
         await this.fetchUserInfo();
       } catch (error) {
         console.error("获取用户信息失败:", error);
       }
     }
-    
-    // 如果没有产品详情数据，则使用模拟数据
-    if (!this.$store.state.productDetails) {
-      this.$store.commit('SET_PRODUCT_DETAILS', mockProductDetails);
+
+    // 如果在组件创建时已经有选中的商品ID，则获取数据
+    if (this.currentProductId) {
+        console.log('Home created with existing currentProductId:', this.currentProductId); // 调试信息
+        this.fetchProductDetails({ pid: this.currentProductId });
+    } else {
+        // 如果没有选中的商品ID，则默认加载指定商品数据
+        const defaultProductId = '325934770006';
+        console.log('No currentProductId, fetching default product:', defaultProductId); // 调试信息
+        this.fetchProductDetails({ pid: defaultProductId });
     }
-    
-    // 如果没有趋势数据，则使用模拟数据
-    if (!this.$store.state.trendsData) {
-      this.$store.commit('SET_TRENDS_DATA', mockTrendsData);
+
+    // 移除加载模拟数据的逻辑
+    // if (!this.$store.state.productDetails) {
+    //   this.$store.commit('SET_PRODUCT_DETAILS', mockProductDetails);
+    // }
+    // if (!this.$store.state.trendsData) {
+    //   this.$store.commit('SET_TRENDS_DATA', mockTrendsData);
+    // }
+  },
+  mounted() {
+    // 在组件挂载后（包括路由切换但组件被重用时）再次尝试获取用户信息
+    if (this.user.userId) {
+      try {
+        this.fetchUserInfo(); // 不需要 await，不阻塞 mounted 钩子
+        console.log('Attempting to fetch user info in mounted hook.'); // 调试信息
+      } catch (error) {
+        console.error("获取用户信息失败 (mounted):", error);
+      }
     }
   },
 };

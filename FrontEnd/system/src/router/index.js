@@ -13,8 +13,9 @@ import SearchDetail from '@/views/SearchDetail.vue'
 import ProductDetail from '@/views/productdetail.vue'
 import SentimentDetail from '@/views/SentimentDetail.vue'
 import TrendDetail from '@/views/TrendDetail.vue'
-import ReviewsDetail from '@/views/ReviewsDetail.vue'
+// 已删除冗余的ReviewsDetail组件
 import SourceDetail from '@/views/SourceDetail.vue'
+import AspectOpinionsDetail from '@/views/AspectOpinionsDetail.vue'
 // 使用 VueRouter 插件
 Vue.use(VueRouter)
 
@@ -90,10 +91,11 @@ const routes = [
         component: TrendDetail,
         meta: { requiresAuth: true }
     },
+    // 已删除冗余的reviews-detail路由
     {
-        path: '/reviews-detail',
-        name: 'ReviewsDetail',
-        component: ReviewsDetail,
+        path: '/aspect-opinions-detail',
+        name: 'AspectOpinionsDetail',
+        component: AspectOpinionsDetail,
         meta: { requiresAuth: true }
     },
     {

@@ -19,7 +19,7 @@ Mock.mock(/\/api\/search\/get_list/, 'get', (options) => {
     if (searchName) {
         if (searchName.toLowerCase().includes('联想')) {
             results.push({
-                id: '1',
+                id: 'sample001',
                 name: '联想ThinkBook16 pro',
                 score: 86,
                 price: '6299 - 8399',
@@ -28,7 +28,7 @@ Mock.mock(/\/api\/search\/get_list/, 'get', (options) => {
         }
         if (searchName.toLowerCase().includes('惠普')) {
             results.push({
-                id: '2',
+                id: 'sample002',
                 name: '惠普星Book pro14',
                 score: 84,
                 price: '6000 - 7000',
@@ -37,7 +37,7 @@ Mock.mock(/\/api\/search\/get_list/, 'get', (options) => {
         }
         if (searchName.toLowerCase().includes('戴尔')) {
             results.push({
-                id: '3',
+                id: 'sample003',
                 name: '戴尔 XPS 13',
                 score: 88,
                 price: '7999 - 9999',
@@ -46,7 +46,7 @@ Mock.mock(/\/api\/search\/get_list/, 'get', (options) => {
         }
         if (searchName.toLowerCase().includes('华硕')) {
             results.push({
-                id: '4',
+                id: 'sample004',
                 name: '华硕 ZenBook',
                 score: 85,
                 price: '5999 - 7999',
@@ -59,28 +59,28 @@ Mock.mock(/\/api\/search\/get_list/, 'get', (options) => {
     if (results.length === 0) {
         results.push(
             {
-                id: '1',
+                id: 'sample001',
                 name: '联想ThinkBook16 pro',
                 score: 86,
                 price: '6299 - 8399',
                 image: productImages['1']
             },
             {
-                id: '2',
+                id: 'sample002',
                 name: '惠普星Book pro14',
                 score: 84,
                 price: '6000 - 7000',
                 image: productImages['2']
             },
             {
-                id: '3',
+                id: 'sample003',
                 name: '戴尔 XPS 13',
                 score: 88,
                 price: '7999 - 9999',
                 image: productImages['3']
             },
             {
-                id: '4',
+                id: 'sample004',
                 name: '华硕 ZenBook',
                 score: 85,
                 price: '5999 - 7999',

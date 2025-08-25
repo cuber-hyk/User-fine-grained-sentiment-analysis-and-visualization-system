@@ -75,6 +75,25 @@ import axios from "axios";
 export default {
   name: "Login",
   data() {
+    // 密码验证规则
+    const validatePassword = (rule, value, callback) => {
+      if (!value) {
+        callback(new Error('请输入密码'));
+      } else if (value.length < 8 || value.length > 20) {
+        callback(new Error('密码长度需8-20位'));
+      } else if (!/[A-Z]/.test(value)) {
+        callback(new Error('密码需包含大写字母'));
+      } else if (!/[a-z]/.test(value)) {
+        callback(new Error('密码需包含小写字母'));
+      } else if (!/[0-9]/.test(value)) {
+        callback(new Error('密码需包含数字'));
+      } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(value)) {
+        callback(new Error('密码需包含特殊符号'));
+      } else {
+        callback();
+      }
+    };
+
     return {
       showPassword: false,
       loading: false,
@@ -93,13 +112,8 @@ export default {
           },
         ],
         password: [
-          { required: true, message: "请输入密码", trigger: "blur" },
-          {
-            pattern:
-              /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()])[A-Za-z\d!@#$%^&*()]{8,20}$/,
-            message: "密码需8-20位，包含大写字母、小写字母、数字、特殊符号",
-            trigger: "blur",
-          },
+          { required: true, message: '请输入密码', trigger: 'blur' },
+          { validator: validatePassword, trigger: 'blur' }
         ],
       },
     };
