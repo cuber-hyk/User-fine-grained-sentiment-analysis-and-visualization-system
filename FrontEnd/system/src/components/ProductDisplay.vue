@@ -88,20 +88,27 @@ export default {
     // 判断当前商品是否已收藏
     isFavorited() {
       if (!this.productDetails) return false;
-      return this.$store.getters.isFavorited(this.productDetails.pid);
+      return this.$store.getters['favorites/isFavorited'](this.productDetails.pid);
     }
   },
   methods: {
     toggleFavorite() {
       if (!this.productDetails) return;
       
+      // 获取当前用户ID
+      const userId = this.$store.state.user.userId;
+      if (!userId) {
+        this.$message.error('请先登录');
+        return;
+      }
+      
       if (this.isFavorited) {
         // 如果已收藏，则取消收藏
-        this.$store.dispatch('removeFromFavorites', this.productDetails.pid);
+        this.$store.dispatch('favorites/removeFromFavorites', { userId, productId: this.productDetails.pid });
         this.$message.success('已取消收藏');
       } else {
         // 如果未收藏，则添加到收藏
-        this.$store.dispatch('addToFavorites', this.productDetails);
+        this.$store.dispatch('favorites/addToFavorites', { userId, product: this.productDetails });
         this.$message.success('已添加到收藏');
       }
     },

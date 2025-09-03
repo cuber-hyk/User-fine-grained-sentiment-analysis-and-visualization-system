@@ -161,13 +161,16 @@ export default {
         if (response.data.code === 200) {
           const userData = response.data.data;
 
-          // 提交用户数据到Vuex
+          // 先设置基本的用户信息
           this.SET_USER({
             userId: userData.userId,
             username: userData.username,
             token: userData.token,
-            phone: this.loginForm.phone,
+            password: this.loginForm.password,
           });
+
+          // 确保token保存到sessionStorage
+          window.sessionStorage.setItem('token', userData.token);
 
           // 处理记住密码功能
           if (this.rememberPassword) {
@@ -182,6 +185,16 @@ export default {
           }
 
           this.$message.success("登录成功");
+          
+          // 登录成功后，强制获取最新的用户信息
+          try {
+            await this.$store.dispatch('fetchUserInfo');
+            console.log('登录后成功获取最新用户信息');
+          } catch (error) {
+            console.error('登录后获取用户信息失败:', error);
+            // 即使获取失败也不影响登录流程
+          }
+          
           // 检查是否有重定向URL，如果有则跳转到该URL，否则跳转到主页
           const redirectUrl = this.$route.query.redirect || "/home";
           this.$router.push(redirectUrl);

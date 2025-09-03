@@ -197,7 +197,7 @@ export default new Vuex.Store({
       }
     },
     SET_ACTIVE_ASPECT(state, aspect) { // 新增：设置当前选中的主题词
-       state.activeAspect = aspect;
+      state.activeAspect = aspect;
     },
   },
 
@@ -228,7 +228,6 @@ export default new Vuex.Store({
             password: loginData.password
           };
 
-
           // 先设置用户基本信息和token
           commit('SET_USER', userData);
           commit('CLEAR_LOGIN_FORM');
@@ -236,11 +235,20 @@ export default new Vuex.Store({
           // 设置全局默认请求头，包含token
           axios.defaults.headers.common['token'] = userData.token;
 
-          // 立即获取完整的用户信息
+          // 立即获取完整的用户信息，确保获取到最新数据
           try {
-            await dispatch('fetchUserInfo');
+            console.log('登录成功后开始获取最新用户信息...');
+            const latestUserInfo = await dispatch('fetchUserInfo');
+            console.log('获取到的最新用户信息:', latestUserInfo);
+
+            // 登录成功后，加载用户的收藏列表
+            if (userData.userId) {
+              await dispatch('favorites/loadUserFavorites', userData.userId);
+              console.log('用户收藏列表加载完成');
+            }
           } catch (error) {
             console.error('Failed to fetch user info after login:', error);
+            // 即使获取失败也不影响登录流程，但记录错误
           }
 
           return true;
@@ -281,6 +289,7 @@ export default new Vuex.Store({
 
     async fetchUserInfo({ state, commit }) {
       try {
+        console.log('开始获取用户信息，当前用户ID:', state.user.userId);
 
         // 从 sessionStorage 获取 token
         const token = window.sessionStorage.getItem('token');
@@ -299,6 +308,8 @@ export default new Vuex.Store({
         const formData = new URLSearchParams();
         formData.append('id', state.user.userId);
 
+        console.log('发送getUser请求，参数:', formData.toString());
+
         const response = await axios({
           method: 'post',
           url: '/api/user/getUser',
@@ -309,21 +320,31 @@ export default new Vuex.Store({
           }
         });
 
+        console.log('getUser响应:', response.data);
 
         // 处理响应...
         if (response.data) {
           console.log('[Store Action] fetchUserInfo received data:', response.data); // Log fetched data
+
+          // 确保所有字段都有值，如果没有则使用现有值
           const userData = {
-            userId: response.data.id,
-            username: response.data.username,
-            phone: response.data.phone,
-            icon: response.data.icon || '',
-            createTime: response.data.createTime,
-            updateTime: response.data.updateTime,
+            userId: response.data.id || state.user.userId,
+            username: response.data.username || state.user.username,
+            phone: response.data.phone || state.user.phone || '',
+            icon: response.data.icon || state.user.icon || '',
+            createTime: response.data.createTime || state.user.createTime,
+            updateTime: response.data.updateTime || state.user.updateTime,
             token: token,
             password: state.user.password // 保留原密码
           };
+
+          console.log('准备更新的用户数据:', userData);
+
+          // 强制更新用户信息
           commit('SET_USER', userData);
+
+          console.log('用户信息更新完成，当前状态:', JSON.parse(JSON.stringify(state.user)));
+
           return userData;
         } else {
           throw new Error('获取用户信息失败');
@@ -341,6 +362,7 @@ export default new Vuex.Store({
           // 清除请求头中的token
           delete axios.defaults.headers.common['token'];
 
+          // 不清除收藏列表，按用户ID保留在本地存储
           commit('LOGOUT');
           commit('CLEAR_LOGIN_FORM');
           console.log("[Vuex] 退出逻辑执行完成");
@@ -427,10 +449,10 @@ export default new Vuex.Store({
 
           // 合并真实的核心商品信息和模拟数据中的其他部分
           const mergedDetails = {
-              ...mockDetailsForPid, // 以模拟数据为基础，获取sources, reviews, trends, aspectOpinions的模拟数据
-              ...productInfo, // 用真实API返回的核心信息（pid, name, image_url, stars, discount_price, normal_price, ratings）覆盖模拟数据
-              pid: pid, // 确保pid正确
-              id: pid // 确保id正确
+            ...mockDetailsForPid, // 以模拟数据为基础，获取sources, reviews, trends, aspectOpinions的模拟数据
+            ...productInfo, // 用真实API返回的核心信息（pid, name, image_url, stars, discount_price, normal_price, ratings）覆盖模拟数据
+            pid: pid, // 确保pid正确
+            id: pid // 确保id正确
           };
 
           // 更新商品详情（可能仍然需要保留，如果其他地方依赖此状态）
@@ -446,26 +468,26 @@ export default new Vuex.Store({
 
             // 检查 mergedDetails 是否已包含 aspectOpinions 数据 (如果 mock 数据提供了)
             if (!mergedDetails.aspectOpinions) { // 如果 mock data 不包含，或者未来移除 mock data
-                const aspectResponse = await axios({
-                  url: '/api/product/getProductAspectOpinionsByPid',
-                  method: 'post',
-                  data: [pid.toString()],
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'token': token
-                  },
-                  timeout: 30000 // 增加超时时间到30秒
-                });
+              const aspectResponse = await axios({
+                url: '/api/product/getProductAspectOpinionsByPid',
+                method: 'post',
+                data: [pid.toString()],
+                headers: {
+                  'Content-Type': 'application/json',
+                  'token': token
+                },
+                timeout: 30000 // 增加超时时间到30秒
+              });
 
-                if (aspectResponse.data.code === 200) {
-                   commit('SET_ASPECT_OPINIONS', aspectResponse.data.data); // 直接设置 AspectOpinions 状态
-                } else {
-                  console.error('获取主题挖掘数据失败:', aspectResponse.data.message);
-                }
+              if (aspectResponse.data.code === 200) {
+                commit('SET_ASPECT_OPINIONS', aspectResponse.data.data); // 直接设置 AspectOpinions 状态
+              } else {
+                console.error('获取主题挖掘数据失败:', aspectResponse.data.message);
+              }
             } else {
-                 // 如果 mock data 提供了 aspectOpinions，直接使用 mock data 中的
-                 commit('SET_ASPECT_OPINIONS', mergedDetails.aspectOpinions);
-                console.log('Using mock aspect opinions data.');
+              // 如果 mock data 提供了 aspectOpinions，直接使用 mock data 中的
+              commit('SET_ASPECT_OPINIONS', mergedDetails.aspectOpinions);
+              console.log('Using mock aspect opinions data.');
             }
 
           } catch (aspectError) {
@@ -474,78 +496,78 @@ export default new Vuex.Store({
 
           // ** 调用真实 API 获取评论热度趋势数据 **
           try {
-              const trendResponse = await axios({
-                  url: '/api/product/getTrend',
-                  method: 'get',
-                  params: { pid: pid.toString() },
-                   headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                  },
-                  timeout: 30000 // 增加超时时间到30秒
-              });
+            const trendResponse = await axios({
+              url: '/api/product/getTrend',
+              method: 'get',
+              params: { pid: pid.toString() },
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+              },
+              timeout: 30000 // 增加超时时间到30秒
+            });
 
-              console.log('评论热度趋势API响应:', trendResponse);
+            console.log('评论热度趋势API响应:', trendResponse);
 
-              if (trendResponse.data.code === 200) {
-                  // 假设后端返回的数据格式可以直接用于图表，或者需要简单转换
-                  // 根据API文档，data字段是一个数组，格式示例未给出，假设是 { year: ..., month: ..., count: ... } 的数组
-                  // 这里直接将返回的 data 数组提交给 mutation
-                  commit('SET_TRENDS_DATA', trendResponse.data.data);
-                  console.log('评论热度趋势数据已更新', trendResponse.data.data);
-              } else {
-                  console.error('获取评论热度趋势数据失败:', trendResponse.data.message);
-                  commit('SET_TRENDS_DATA', null); // 获取失败时清空数据
-                }
-          } catch (trendError) {
-              console.error('获取评论热度趋势数据失败:', trendError);
+            if (trendResponse.data.code === 200) {
+              // 假设后端返回的数据格式可以直接用于图表，或者需要简单转换
+              // 根据API文档，data字段是一个数组，格式示例未给出，假设是 { year: ..., month: ..., count: ... } 的数组
+              // 这里直接将返回的 data 数组提交给 mutation
+              commit('SET_TRENDS_DATA', trendResponse.data.data);
+              console.log('评论热度趋势数据已更新', trendResponse.data.data);
+            } else {
+              console.error('获取评论热度趋势数据失败:', trendResponse.data.message);
               commit('SET_TRENDS_DATA', null); // 获取失败时清空数据
+            }
+          } catch (trendError) {
+            console.error('获取评论热度趋势数据失败:', trendError);
+            commit('SET_TRENDS_DATA', null); // 获取失败时清空数据
           }
 
           // ** 调用真实 API 获取情感极性分析数据 **
           try {
-              const token = window.sessionStorage.getItem('token');
-              const sentimentResponse = await axios({
-                  url: '/api/product/getProductAspectSentimentsByPid', // 使用之前确定的接口
-                  method: 'post',
-                  data: [pid.toString()], // 接口需要一个包含 pid 的数组作为请求体
-                   headers: {
-                    'Content-Type': 'application/json',
-                    'token': token
-                  },
-                  timeout: 30000 // 增加超时时间到30秒
+            const token = window.sessionStorage.getItem('token');
+            const sentimentResponse = await axios({
+              url: '/api/product/getProductAspectSentimentsByPid', // 使用之前确定的接口
+              method: 'post',
+              data: [pid.toString()], // 接口需要一个包含 pid 的数组作为请求体
+              headers: {
+                'Content-Type': 'application/json',
+                'token': token
+              },
+              timeout: 30000 // 增加超时时间到30秒
+            });
+
+            console.log('情感极性分析API响应:', sentimentResponse);
+
+            if (sentimentResponse.data.code === 200 && sentimentResponse.data.data) {
+              // 根据接口返回的数据结构，累加正面、负面、中性评论数
+              let totalPositive = 0;
+              let totalNegative = 0;
+              let totalNeutral = 0;
+
+              sentimentResponse.data.data.forEach(item => {
+                totalPositive += item.positiveOpinions;
+                totalNegative += item.negativeOpinions;
+                totalNeutral += item.neutralOpinions;
               });
 
-              console.log('情感极性分析API响应:', sentimentResponse);
+              // 将累加结果格式化为 SentimentChart 期望的数据结构
+              const formattedSentimentData = {
+                Positive: totalPositive,
+                Negative: totalNegative,
+                Neutral: totalNeutral
+              };
 
-              if (sentimentResponse.data.code === 200 && sentimentResponse.data.data) {
-                  // 根据接口返回的数据结构，累加正面、负面、中性评论数
-                  let totalPositive = 0;
-                  let totalNegative = 0;
-                  let totalNeutral = 0;
-
-                  sentimentResponse.data.data.forEach(item => {
-                    totalPositive += item.positiveOpinions;
-                    totalNegative += item.negativeOpinions;
-                    totalNeutral += item.neutralOpinions;
-                  });
-
-                  // 将累加结果格式化为 SentimentChart 期望的数据结构
-                  const formattedSentimentData = {
-                    Positive: totalPositive,
-                    Negative: totalNegative,
-                    Neutral: totalNeutral
-                  };
-
-                  commit('SET_SENTIMENT_DATA', formattedSentimentData); // 更新 store 中的情感数据
-                  console.log('情感极性分析数据已更新', formattedSentimentData);
-              } else {
-                  console.error('获取情感极性分析数据失败:', sentimentResponse.data.message);
-                  commit('SET_SENTIMENT_DATA', null); // 获取失败时清空数据
-              }
+              commit('SET_SENTIMENT_DATA', formattedSentimentData); // 更新 store 中的情感数据
+              console.log('情感极性分析数据已更新', formattedSentimentData);
+            } else {
+              console.error('获取情感极性分析数据失败:', sentimentResponse.data.message);
+              commit('SET_SENTIMENT_DATA', null); // 获取失败时清空数据
+            }
 
           } catch (sentimentError) {
-              console.error('获取情感极性分析数据失败:', sentimentError);
-              commit('SET_SENTIMENT_DATA', null); // 获取失败时清空数据
+            console.error('获取情感极性分析数据失败:', sentimentError);
+            commit('SET_SENTIMENT_DATA', null); // 获取失败时清空数据
           }
 
 
@@ -597,83 +619,83 @@ export default new Vuex.Store({
 
     // 新增或修改 updateUserInfo action 来统一处理用户名、密码、头像更新
     async updateUserInfo({ commit }, payload) {
-        try {
-             // 验证 payload 中至少包含 id
-             if (!payload || payload.id === undefined) {
-                 throw new Error('更新用户信息参数不完整: 缺少用户ID');
-             }
-
-             const token = window.sessionStorage.getItem('token');
-             if (!token) {
-                 throw new Error('未登录或 token 已失效');
-             }
-
-             // 构造符合 UserUpdateInfoDTO 结构的 JSON 请求体
-             const requestData = {
-                 id: payload.id,
-                 // 只包含 payload 中存在的字段
-                 ...(payload.username !== undefined && { username: payload.username }),
-                 ...(payload.newPassword !== undefined && { newPassword: payload.newPassword }),
-                 ...(payload.oldPassword !== undefined && { password: payload.oldPassword }), // 映射 oldPassword 到 password
-                 ...(payload.icon !== undefined && { icon: payload.icon }),
-             };
-
-             console.log('Sending updateUserInfo request data (JSON):', requestData);
-
-             const response = await axios.post('/api/user/updateUserInfo', requestData, {
-                 headers: {
-                     'Content-Type': 'application/json',
-                     'token': token
-                 }
-             });
-
-             // 根据API文档，成功返回 code 为 0，也处理 code 为 200 的情况以兼容之前的发现
-             if (response.data && (response.data.code === 0 || response.data.code === 200)) {
-                 console.log('updateUserInfo success response:', response.data);
-                 // 更新本地 store 状态
-                 if (payload.username !== undefined) {
-                     commit('SET_USER_USERNAME', payload.username);
-                 }
-                 if (payload.icon !== undefined) {
-                     // 假设后端返回的 icon 是可以直接使用的 URL
-                     commit('SET_USER_ICON', payload.icon);
-                 }
-                 // 注意：修改密码成功后，通常不直接更新 store 中的密码字段，以强制用户重新登录。
-                 // 如果业务需要更新，可以在这里添加相应的 mutation 调用。
-
-                 return response; // 返回完整的响应对象
-             } else {
-                 console.error('updateUserInfo backend error:', response.data);
-                 throw new Error(response.data?.message || '更新用户信息失败');
-             }
-
-        } catch (error) {
-            console.error('updateUserInfo request or processing failed:', error);
-             if (error.response && error.response.data && error.response.data.message) {
-                 throw new Error(`更新用户信息失败: ${error.response.data.message}`);
-             } else if (error.response && error.response.status) {
-                 throw new Error(`请求失败，状态码 ${error.response.status}`);
-             } else {
-                 throw new Error(`请求出错，请检查网络或稍后重试: ${error.message}`);
-             }
+      try {
+        // 验证 payload 中至少包含 id
+        if (!payload || payload.id === undefined) {
+          throw new Error('更新用户信息参数不完整: 缺少用户ID');
         }
+
+        const token = window.sessionStorage.getItem('token');
+        if (!token) {
+          throw new Error('未登录或 token 已失效');
+        }
+
+        // 构造符合 UserUpdateInfoDTO 结构的 JSON 请求体
+        const requestData = {
+          id: payload.id,
+          // 只包含 payload 中存在的字段
+          ...(payload.username !== undefined && { username: payload.username }),
+          ...(payload.newPassword !== undefined && { newPassword: payload.newPassword }),
+          ...(payload.oldPassword !== undefined && { password: payload.oldPassword }), // 映射 oldPassword 到 password
+          ...(payload.icon !== undefined && { icon: payload.icon }),
+        };
+
+        console.log('Sending updateUserInfo request data (JSON):', requestData);
+
+        const response = await axios.post('/api/user/updateUserInfo', requestData, {
+          headers: {
+            'Content-Type': 'application/json',
+            'token': token
+          }
+        });
+
+        // 根据API文档，成功返回 code 为 0，也处理 code 为 200 的情况以兼容之前的发现
+        if (response.data && (response.data.code === 0 || response.data.code === 200)) {
+          console.log('updateUserInfo success response:', response.data);
+          // 更新本地 store 状态
+          if (payload.username !== undefined) {
+            commit('SET_USER_USERNAME', payload.username);
+          }
+          if (payload.icon !== undefined) {
+            // 假设后端返回的 icon 是可以直接使用的 URL
+            commit('SET_USER_ICON', payload.icon);
+          }
+          // 注意：修改密码成功后，通常不直接更新 store 中的密码字段，以强制用户重新登录。
+          // 如果业务需要更新，可以在这里添加相应的 mutation 调用。
+
+          return response; // 返回完整的响应对象
+        } else {
+          console.error('updateUserInfo backend error:', response.data);
+          throw new Error(response.data?.message || '更新用户信息失败');
+        }
+
+      } catch (error) {
+        console.error('updateUserInfo request or processing failed:', error);
+        if (error.response && error.response.data && error.response.data.message) {
+          throw new Error(`更新用户信息失败: ${error.response.data.message}`);
+        } else if (error.response && error.response.status) {
+          throw new Error(`请求失败，状态码 ${error.response.status}`);
+        } else {
+          throw new Error(`请求出错，请检查网络或稍后重试: ${error.message}`);
+        }
+      }
     },
 
     async updateUserPhone({ state, commit }, payload) {
       try {
         // 验证 payload 参数
         if (!payload || payload.id === undefined || payload.phone === undefined || payload.newPhone === undefined) {
-           console.error('updateUserPhone action received incomplete payload:', payload);
-           throw new Error('更新手机号参数不完整');
+          console.error('updateUserPhone action received incomplete payload:', payload);
+          throw new Error('更新手机号参数不完整');
         }
         if (!state.user || !state.user.token) {
-            throw new Error('用户未登录或 token 不存在');
+          throw new Error('用户未登录或 token 不存在');
         }
 
         // 从 sessionStorage 获取 token (如果 axios 拦截器已设置，这里可省略)
         const token = window.sessionStorage.getItem('token');
         if (!token) {
-            throw new Error('未登录或 token 已失效');
+          throw new Error('未登录或 token 已失效');
         }
 
 
@@ -686,8 +708,8 @@ export default new Vuex.Store({
 
         // 设置请求头，确保 Content-Type 是 application/json
         const requestHeaders = {
-           'Content-Type': 'application/json',
-           'token': token // 如果 axios 拦截器已设置，这里可省略
+          'Content-Type': 'application/json',
+          'token': token // 如果 axios 拦截器已设置，这里可省略
         };
 
         console.log('Sending phone update request data (JSON):', requestData); // 调试信息
@@ -713,13 +735,13 @@ export default new Vuex.Store({
         console.error('更新手机号请求或处理失败:', error); // 优化错误日志
         // 检查 error.response 获取更多后端返回的错误详情
         if (error.response && error.response.data && error.response.data.message) {
-           console.error('后端错误信息:', error.response.data.message); // 再次打印后端错误信息
-           throw new Error(`更新手机号失败: ${error.response.data.message}`);
+          console.error('后端错误信息:', error.response.data.message); // 再次打印后端错误信息
+          throw new Error(`更新手机号失败: ${error.response.data.message}`);
         } else if (error.response && error.response.status) { // 检查非 200 状态码错误
-            console.error('请求失败，状态码:', error.response.status);
-             throw new Error(`请求失败，状态码 ${error.response.status}`);
+          console.error('请求失败，状态码:', error.response.status);
+          throw new Error(`请求失败，状态码 ${error.response.status}`);
         } else { // 处理网络错误等
-           throw new Error(`请求出错，请检查网络或稍后重试: ${error.message}`);
+          throw new Error(`请求出错，请检查网络或稍后重试: ${error.message}`);
         }
       }
     },
@@ -789,19 +811,60 @@ export default new Vuex.Store({
         if (!token) {
           throw new Error('未登录或 token 已失效');
         }
+
+        // 根据接口文档构造请求数据
         const requestData = {
           iconFile: payload.iconFile,
           id: payload.id
         };
+
+        console.log('发送头像更新请求:', requestData);
+
         const response = await axios.post('/api/user/updateUserIcon', requestData, {
           headers: {
             'Content-Type': 'application/json',
             'token': token
           }
         });
-        return response;
+
+        console.log('头像更新响应:', response.data);
+
+        // 检查响应状态
+        if (response.data && response.data.code === 200) {
+          console.log('头像更新成功');
+          return response;
+        } else {
+          throw new Error(response.data?.message || '头像更新失败');
+        }
       } catch (error) {
         console.error('updateUserIcon error:', error);
+        throw error;
+      }
+    },
+
+    // 强制刷新用户信息
+    async forceRefreshUserInfo({ state, commit, dispatch }) {
+      try {
+        console.log('强制刷新用户信息...');
+
+        // 清除本地缓存的用户信息
+        const currentToken = state.user.token;
+        const currentPassword = state.user.password;
+
+        // 临时清空用户信息，强制重新获取
+        commit('SET_USER', {
+          userId: state.user.userId,
+          token: currentToken,
+          password: currentPassword
+        });
+
+        // 重新获取用户信息
+        const freshUserInfo = await dispatch('fetchUserInfo');
+        console.log('强制刷新完成，最新用户信息:', freshUserInfo);
+
+        return freshUserInfo;
+      } catch (error) {
+        console.error('强制刷新用户信息失败:', error);
         throw error;
       }
     },

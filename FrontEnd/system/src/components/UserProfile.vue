@@ -65,6 +65,7 @@
                action="#"
                :show-file-list="false"
                :before-upload="beforeAvatarUpload"
+               :disabled="uploadingAvatar"
              >
                <el-avatar :size="80" :src="getAvatarUrl(user.icon)" class="user-avatar">
                  {{ user.username?.charAt(0).toUpperCase() || "U" }}
@@ -73,7 +74,8 @@
                  v-if="isEditing"
                  class="avatar-edit-hint"
                >
-                 修改头像
+                 <i class="el-icon-camera"></i>
+                 <span>{{ uploadingAvatar ? '上传中...' : '点击更换头像' }}</span>
                </div>
              </el-upload>
           </div>
@@ -173,11 +175,21 @@
         <!-- Action buttons -->
         <div class="action-buttons">
           <el-button
-            v-if="!isEditing && !isEditingPassword && !isEditingPhone"
+            v-if="!isEditing && !isEditingPassword && !isEditingUsername && !isEditingPhone"
             type="primary"
             @click="toggleEditMode"
+            icon="el-icon-edit"
           >
             编辑信息
+          </el-button>
+          <el-button
+            v-if="!isEditing && !isEditingPassword && !isEditingUsername && !isEditingPhone"
+            type="info"
+            @click="refreshUserInfo"
+            icon="el-icon-refresh"
+            :loading="refreshing"
+          >
+            刷新信息
           </el-button>
            <el-button
              v-if="isEditing && !isEditingPassword && !isEditingUsername && !isEditingPhone"
@@ -200,6 +212,15 @@
       <!-- 我的收藏内容 -->
       <div v-show="activeMenu === 'favorites'" class="content-panel">
          <h3 class="panel-title">我的收藏</h3>
+         
+         <!-- 调试信息 -->
+         <!-- <div class="debug-info" style="background: rgba(255,255,255,0.1); padding: 10px; margin-bottom: 15px; border-radius: 5px; font-size: 12px;">
+           <p>当前用户ID: {{ user.userId }}</p>
+           <p>收藏数量: {{ favorites.length }}</p>
+           <p>收藏数据: {{ JSON.stringify(favorites) }}</p>
+           <el-button size="mini" @click="loadFavorites" style="margin-top: 5px;">手动加载收藏</el-button>
+         </div> -->
+         
         <div v-if="favorites.length > 0" class="favorites-list">
           <el-card v-for="item in favorites" :key="item.pid" class="favorite-item">
             <div class="favorite-content">
@@ -222,7 +243,7 @@
                 </div>
               </div>
               <div class="favorite-actions">
-                <el-button type="danger" size="mini" icon="el-icon-delete" circle @click="removeFromFavorites(item.pid)"></el-button>
+                <el-button type="danger" size="mini" icon="el-icon-delete" circle @click="removeFromFavorites({ userId: user.userId, productId: item.pid })"></el-button>
                 <el-button type="primary" size="mini" icon="el-icon-view" circle @click="viewProductDetails(item)"></el-button>
               </div>
             </div>
@@ -297,6 +318,8 @@ export default {
         newPhone: "",
       },
       uploadUrl: process.env.VUE_APP_BASE_API + "/api/upload",
+      refreshing: false,
+      uploadingAvatar: false,
     };
   },
   computed: {
@@ -308,7 +331,19 @@ export default {
       return { Authorization: `Bearer ${this.user.token}` };
     },
     favorites() {
-      return this.$store.state.favorites.favorites;
+      return this.$store.state.favorites.favorites || [];
+    }
+  },
+  watch: {
+    // 监听用户ID变化，自动加载对应的收藏列表
+    'user.userId': {
+      handler(newUserId, oldUserId) {
+        if (newUserId && newUserId !== oldUserId) {
+          console.log('用户ID变化，加载新用户的收藏列表:', newUserId);
+          this.$store.dispatch('favorites/loadUserFavorites', newUserId);
+        }
+      },
+      immediate: true
     }
   },
   created() {
@@ -320,9 +355,25 @@ export default {
     }
     
     this.editForm.username = this.user.username;
+    
+    // 加载当前用户的收藏列表
+    if (this.user.userId) {
+      this.$store.dispatch('favorites/loadUserFavorites', this.user.userId);
+    }
   },
   methods: {
-    ...mapActions(['removeFromFavorites', 'fetchProductDetails', 'updateUserBasicInfo', 'updateUserPhone', 'updateUserPassword', 'updateUserUsername', 'updateUserIcon']),
+    ...mapActions(['fetchProductDetails', 'updateUserBasicInfo', 'updateUserPhone', 'updateUserPassword', 'updateUserUsername', 'updateUserIcon']),
+    
+    // 收藏相关的actions
+    removeFromFavorites({ userId, productId }) {
+      if (userId) {
+        this.$store.dispatch('favorites/removeFromFavorites', { 
+          userId, 
+          productId 
+        });
+        this.$message.success('已从收藏中移除');
+      }
+    },
     
     async getUserInfo() {
       try {
@@ -339,19 +390,21 @@ export default {
           return;
         }
 
+        this.$message.info('正在获取用户信息...');
+
         const formData = new URLSearchParams();
         formData.append("id", parseInt(this.user.userId, 10));
 
         console.log("请求参数:", formData.toString());
         console.log("请求头:", {
           "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: `Bearer ${this.user.token}`,
+          "token": this.user.token,
         });
 
         const res = await axios.post("/api/user/getUser", formData, {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
-            Authorization: `Bearer ${this.user.token}`,
+            "token": this.user.token,
           },
         });
 
@@ -374,6 +427,11 @@ export default {
             this.$store.commit('SET_USER', updatedUser);
             
             this.editForm.username = updatedUser.username;
+            
+            // 重新加载用户的收藏列表
+            if (updatedUser.userId) {
+              this.$store.dispatch('favorites/loadUserFavorites', updatedUser.userId);
+            }
             
             this.$message.success("获取用户信息成功");
           } else {
@@ -443,25 +501,40 @@ export default {
       }
 
       try {
-        // 调用新的 updateUserUsername action
-        const response = await this.$store.dispatch('updateUserUsername', {
+        this.$message.info('正在更新用户名...');
+        
+        // 调用用户名更新接口
+        const response = await axios.post('/api/user/updateUserUsername', {
           id: this.user.userId,
           newUsername: newUsername
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'token': this.user.token
+          }
         });
 
-        if (response && response.data && (response.data.code === 0 || response.data.code === 200)) {
+        if (response.data && response.data.code === 200) {
           this.$message.success("用户名更新成功");
+          // 更新本地用户信息
+          const updatedUser = { ...this.user, username: newUsername };
+          this.$store.commit('SET_USER', updatedUser);
           this.cancelEditUsername();
-          // 重新拉取后端最新用户信息，确保刷新后用户名一致
-          await this.getUserInfo();
+          
+          // 自动刷新用户信息，确保数据同步
+          await this.refreshUserInfo();
         } else {
-          this.$message.error(response.data?.message || "用户名更新失败：后端返回非成功状态码");
-          this.cancelEditUsername();
+          this.$message.error(response.data?.message || "用户名更新失败");
         }
       } catch (error) {
-        console.error('保存用户名失败:', error);
-        this.$message.error(error.message || "保存用户名失败，请稍后重试");
-        this.cancelEditUsername();
+        console.error('用户名更新失败:', error);
+        if (error.response) {
+          this.$message.error(`用户名更新失败: ${error.response.data?.message || '未知错误'}`);
+        } else if (error.request) {
+          this.$message.error("服务器无响应，请检查网络连接");
+        } else {
+          this.$message.error(`请求错误: ${error.message}`);
+        }
       }
     },
 
@@ -477,61 +550,143 @@ export default {
       this.phoneForm = { oldPhone: '', newPhone: '' };
     },
 
-    beforeAvatarUpload(file) {
-      console.log('beforeAvatarUpload 被调用', file);
-      // 校验图片类型和大小
-      const isImage = file.type.startsWith("image/");
+    async beforeAvatarUpload(file) {
+      const isJPG = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/gif';
       const isLt2M = file.size / 1024 / 1024 < 2;
-      if (!isImage) {
-        this.$message.error("只能上传图片文件");
+
+      if (!isJPG) {
+        this.$message.error('头像只能是 JPG/PNG/GIF 格式!');
         return false;
       }
       if (!isLt2M) {
-        this.$message.error("头像大小不能超过2MB");
+        this.$message.error('头像大小不能超过 2MB!');
         return false;
       }
-      // 通过校验后，手动调用头像上传逻辑
-      this.handleAvatarChange(file);
-      // 阻止 el-upload 默认上传
-      return false;
+
+      // 显示上传进度
+      this.$message.info('开始上传头像...');
+      
+      // 直接调用头像更新方法
+      await this.handleAvatarUpload(file);
+      return false; // 阻止默认上传行为
     },
 
-    async handleAvatarChange(file) {
-      console.log('handleAvatarChange 被调用', file);
-      // 1. 上传图片到 /api/image/upload
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('userId', this.user.userId);
+    async handleAvatarUpload(file) {
       try {
-        const uploadRes = await axios.post('/api/image/upload', formData);
-        // 兼容后端返回字符串或标准JSON
-        let imageUrl = '';
-        if (typeof uploadRes.data === 'string') {
-          // 提取URL
-          const match = uploadRes.data.match(/https?:\/\/[\w\-./?%&=:@#]+/);
-          imageUrl = match ? match[0] : '';
-        } else if (uploadRes.data && uploadRes.data.data) {
-          imageUrl = uploadRes.data.data;
+        this.uploadingAvatar = true;
+        this.$message.info('正在上传头像...');
+        
+        // 创建 FormData 对象
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('userId', this.user.userId);
+        
+        // 调用图片上传接口
+        const uploadResponse = await axios.post('/api/image/upload', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'token': this.user.token
+          }
+        });
+        
+        if (uploadResponse.data && uploadResponse.data.code === 200) {
+          const iconUrl = uploadResponse.data.data;
+          
+          this.$message.info('图片上传成功，正在更新头像...');
+          
+          // 尝试使用 JSON 格式更新头像
+          try {
+            const updateResponse = await this.updateUserIconJson(iconUrl);
+            if (updateResponse) {
+              this.$message.success('头像更新成功');
+              // 更新本地用户信息
+              const updatedUser = { ...this.user, icon: iconUrl };
+              this.$store.commit('SET_USER', updatedUser);
+              // 重新获取用户信息
+              await this.refreshUserInfo();
+              return;
+            }
+          } catch (jsonError) {
+            console.log('JSON格式更新失败，尝试form-urlencoded格式:', jsonError);
+            
+            // 如果JSON格式失败，尝试form-urlencoded格式
+            try {
+              const updateResponse = await this.updateUserIconForm(iconUrl);
+              if (updateResponse) {
+                this.$message.success('头像更新成功');
+                // 更新本地用户信息
+                const updatedUser = { ...this.user, icon: iconUrl };
+                this.$store.commit('SET_USER', updatedUser);
+                // 重新获取用户信息
+                await this.refreshUserInfo();
+                return;
+              }
+            } catch (formError) {
+              console.error('form-urlencoded格式也失败:', formError);
+              this.$message.error('头像更新失败，请稍后重试');
+            }
+          }
+        } else {
+          this.$message.error(uploadResponse.data?.message || '图片上传失败');
         }
-        if (!imageUrl) {
-          this.$message.error('图片上传失败');
-          return;
+      } catch (error) {
+        console.error('头像上传失败:', error);
+        if (error.response) {
+          this.$message.error(`头像上传失败: ${error.response.data?.message || '未知错误'}`);
+        } else {
+          this.$message.error('头像上传失败，请检查网络连接');
         }
-        // 2. 调用更新头像接口
-        const res = await axios.post('/api/user/updateUserIcon', {
-          iconFile: imageUrl,
+      } finally {
+        this.uploadingAvatar = false;
+      }
+    },
+
+    // 使用JSON格式更新头像
+    async updateUserIconJson(iconUrl) {
+      try {
+        const response = await axios.post('/api/user/updateUserIcon', {
+          iconFile: iconUrl,
           id: this.user.userId
         }, {
-          headers: { 'Content-Type': 'application/json' }
+          headers: {
+            'Content-Type': 'application/json',
+            'token': this.user.token
+          }
         });
-        if (res.data && (res.data.code === 0 || res.data.code === 200)) {
-          this.$message.success('头像更新成功');
-          await this.getUserInfo();
+        
+        if (response.data && response.data.code === 200) {
+          return true;
         } else {
-          this.$message.error(res.data?.message || '头像更新失败');
+          throw new Error(response.data?.message || '头像更新失败');
         }
-      } catch (err) {
-        this.$message.error('头像更新失败');
+      } catch (error) {
+        console.error('JSON格式头像更新失败:', error);
+        throw error;
+      }
+    },
+
+    // 使用form-urlencoded格式更新头像
+    async updateUserIconForm(iconUrl) {
+      try {
+        const formData = new URLSearchParams();
+        formData.append('iconFile', iconUrl);
+        formData.append('id', this.user.userId);
+        
+        const response = await axios.post('/api/user/updateUserIcon', formData, {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'token': this.user.token
+          }
+        });
+        
+        if (response.data && response.data.code === 200) {
+          return true;
+        } else {
+          throw new Error(response.data?.message || '头像更新失败');
+        }
+      } catch (error) {
+        console.error('form-urlencoded格式头像更新失败:', error);
+        throw error;
       }
     },
 
@@ -567,10 +722,18 @@ export default {
       }
 
       try {
-        const response = await this.$store.dispatch('updateUserPassword', {
+        this.$message.info('正在更新密码...');
+        
+        // 调用密码更新接口
+        const response = await axios.post('/api/user/updateUserPassword', {
           id: this.user.userId,
           password: this.passwordForm.oldPassword,
           newPassword: this.passwordForm.newPassword
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'token': this.user.token
+          }
         });
 
         if (response.data && response.data.code === 200) {
@@ -665,6 +828,85 @@ export default {
       if (icon.startsWith('http')) return icon;
       return `http://localhost:8080/${icon.replace(/^\//, '')}`;
     },
+
+    async handlePhoneUpdate() {
+      if (!this.phoneForm.oldPhone || !this.phoneForm.newPhone) {
+        this.$message.warning("请填写完整的手机号信息");
+        return;
+      }
+
+      // 验证手机号格式
+      const phoneRegex = /^1[3-9]\d{9}$/;
+      if (!phoneRegex.test(this.phoneForm.newPhone)) {
+        this.$message.warning("请输入正确的手机号格式");
+        return;
+      }
+
+      if (this.phoneForm.oldPhone === this.phoneForm.newPhone) {
+        this.$message.warning("新手机号不能与原手机号相同");
+        return;
+      }
+
+      try {
+        this.$message.info('正在更新手机号...');
+        
+        // 调用手机号更新接口
+        const response = await axios.post('/api/user/updateUserPhone', {
+          id: this.user.userId,
+          phone: this.phoneForm.oldPhone,
+          newPhone: this.phoneForm.newPhone
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'token': this.user.token
+          }
+        });
+
+        if (response.data && response.data.code === 200) {
+          this.$message.success("手机号更新成功");
+          // 更新本地用户信息
+          const updatedUser = { ...this.user, phone: this.phoneForm.newPhone };
+          this.$store.commit('SET_USER', updatedUser);
+          this.cancelEditPhone();
+          
+          // 自动刷新用户信息，确保数据同步
+          await this.refreshUserInfo();
+        } else {
+          this.$message.error(response.data?.message || "手机号更新失败");
+        }
+      } catch (error) {
+        console.error('手机号更新失败:', error);
+        if (error.response) {
+          this.$message.error(`手机号更新失败: ${error.response.data?.message || '未知错误'}`);
+        } else if (error.request) {
+          this.$message.error("服务器无响应，请检查网络连接");
+        } else {
+          this.$message.error(`请求错误: ${error.message}`);
+        }
+      }
+    },
+
+    async refreshUserInfo() {
+      this.refreshing = true;
+      try {
+        await this.getUserInfo();
+        this.$message.success("用户信息已刷新");
+      } catch (error) {
+        console.error("刷新用户信息失败:", error);
+        this.$message.error("刷新用户信息失败");
+      } finally {
+        this.refreshing = false;
+      }
+    },
+
+    async loadFavorites() {
+      if (this.user.userId) {
+        this.$store.dispatch('favorites/loadUserFavorites', this.user.userId);
+        this.$message.success('收藏列表已手动加载');
+      } else {
+        this.$message.error('用户ID不存在，无法加载收藏列表');
+      }
+    }
   },
 };
 </script>
@@ -685,15 +927,19 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 15px;
-  max-height: 500px;
+  max-height: 70vh;
   overflow-y: auto;
   padding-right: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
 }
 
 .favorite-item {
   border-radius: 8px;
   overflow: hidden;
   transition: all 0.3s ease;
+  margin-bottom: 15px;
+  flex-shrink: 0;
 }
 
 .favorite-item:hover {
